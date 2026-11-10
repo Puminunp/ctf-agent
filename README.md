@@ -29,6 +29,12 @@ git -C external/NYU_CTF_Bench rev-parse HEAD                  # record both comm
 git -C external/CTFTiny rev-parse HEAD
 ```
 
+**Windows note:** a plain `git clone` of both datasets fails on Windows, because each has a challenge folder named
+`get_it?` (a `?` is not allowed in Windows file names) and Git aborts the checkout, leaving an empty working tree. On Windows,
+download the GitHub ZIP of CTFTiny and extract it with `tar -xf` into its own folder (it skips the bad name), then pass
+`--dataset external/ctftiny_files/CTFTiny-main/ctftiny.json`. Prefer Linux or WSL2 for the real runs: NYU_CTF_Bench has
+the same problem and is too large for the ZIP route, and Windows line endings can break scripts inside Docker images.
+
 Put the instructor's `course-compose.yaml` in the repo root (or change `environment.compose_file`), and inspect it
 before starting anything:
 
