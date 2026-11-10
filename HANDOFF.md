@@ -23,13 +23,23 @@ Fill in the `TODO` fields as Part 1 finishes. Part 2 reads this first.
   table in one script; submitted without running the binary to confirm (it was right).
 - Pilot 4 (Nov 9): `pwn-puffin` (Very Easy, live target), solved in 4 steps, 13.0 s, 11,161 in / 1,003 out tokens. First run through the internal
   network: the agent reached `target:31140` with `nc`, overflowed the buffer, got the flag. Reset took 3.2 s.
-- Implication: 4 solves out of 4 give no failure to learn from. The scored set now includes harder challenges (2 Moderate, 1 Hard) in the
-  hope of seeing failures in the baseline run itself, which is the plan: baseline first, then read failures, then one fix and a re-check. Pilot a harder one (`rev-beleaf` Moderate,
-  `pwn-puffin` with a target) to find the trace problem worth fixing.
-- NOT done: more pilots, the trace-driven change, any scored attempts. `runs/eval/` does not exist yet.
-- Open question for the professor (not answered in his reply): whether the grading table's "controlled comparison" still applies.
-  Plan that covers both readings: scored baseline = 3 trials x 10 challenges with `config_id = agent`; then re-test one trace-driven fix
-  on 2-3 challenges as a separate config (`agent-fix`) in `runs/followup/`, reported separately.
+- Scored baseline DONE (Nov 10, tag `frozen-eval-v1`): 24 of 30 solved, 6 HTTP 429 gateway errors (see "Run status"). Re-run of those 6 slots
+  under `agent-fix`: 6 of 6 solved (`runs/rerun/`). Both are summarised below.
+- **Professor's update (Nov 10).** The revised guide drops the instructor infrastructure: use the CTFTiny repo's files, verify flags locally
+  from benchmark metadata (kept away from the agent), helper scripts are optional, we choose our own challenge IDs, start with a Very Easy
+  challenge. All of this matches what was built. The assignment text the professor re-posted is the ORIGINAL rubric, so it applies:
+  a controlled comparison of two configurations (20 pts), pass@1/2/3, average solve rate and variance, time/calls/tokens/cost, solve-rate
+  change in percentage points with trace citations, a failure analysis, and a video or demo of a SUCCESSFUL autonomous run (3 pts).
+  Hints: a smaller tool-capable model while debugging (we use `claude-haiku-5-5`); connect to Duke VPN before the AI Gateway.
+- Consequence for the comparison: the 6-slot re-run is supporting evidence only. The controlled comparison is baseline `agent` (30 attempts,
+  `runs/eval/`) vs `agent-fix` run fresh on all 10 challenges x 3 trials (`runs/fix/`, NOT YET RUN). Then run
+  `scripts/compare_configs.py --manifest evaluation_manifest.json --a runs/eval --b runs/fix --out runs/comparison.json --md runs/comparison.md`.
+  The baseline's own metrics are already in `runs/baseline_metrics.md` / `.json`.
+- Baseline metrics (config `agent`, all attempts counted, infrastructure errors counted as failures): success 80.0%; pass@1 70.0, pass@2 90.0,
+  pass@3 100.0; solve rate by trial 70 / 80 / 90, mean 80.0, sample variance 100.0 pp^2; excluding infra errors the success rate is 100.0%.
+  201 model calls, 202 tool calls, 1,261.5 s total (42.1 s per attempt), 1,177,441 in / 159,101 out tokens, estimated cost $0.197.
+- Cost is an ESTIMATE at Anthropic list prices for `claude-haiku-5-5` ($0.10 in / $0.50 out per million tokens, prompts under 100K tokens,
+  no caching). The Duke gateway may bill differently; say so in the report.
 
 ## Fixed configuration
 
