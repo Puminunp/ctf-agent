@@ -2,7 +2,7 @@
   "split": "evaluation",
   "source": "CTFTiny",
   "source_commit": "f1c9531672c45b24b7fb5f3aa44a7ac33d3602f8",
-  "created_utc": "2026-11-10T04:20:07+00:00",
+  "created_utc": "2026-11-10T04:38:10+00:00",
   "challenges": [
     {
       "id": "cry-hybrid2",
@@ -11,21 +11,9 @@
       "difficulty": "Very Easy"
     },
     {
-      "id": "rev-checker",
-      "category": "rev",
-      "path": "ctftiny/rev/checker",
-      "difficulty": "Very Easy"
-    },
-    {
       "id": "rev-whataxor",
       "category": "rev",
       "path": "ctftiny/rev/whataxor",
-      "difficulty": "Very Easy"
-    },
-    {
-      "id": "pwn-puffin",
-      "category": "pwn",
-      "path": "ctftiny/pwn/puffin",
       "difficulty": "Very Easy"
     },
     {
@@ -59,10 +47,22 @@
       "difficulty": "Easy"
     },
     {
-      "id": "rev-beleaf",
-      "category": "rev",
-      "path": "ctftiny/rev/beleaf",
+      "id": "cry-collision-course",
+      "category": "crypto",
+      "path": "ctftiny/cry/Collision-Course",
       "difficulty": "Moderate"
+    },
+    {
+      "id": "pwn-bigboy",
+      "category": "pwn",
+      "path": "ctftiny/pwn/bigboy",
+      "difficulty": "Moderate"
+    },
+    {
+      "id": "rev-maze",
+      "category": "rev",
+      "path": "ctftiny/rev/maze",
+      "difficulty": "Hard"
     }
   ]
 }
