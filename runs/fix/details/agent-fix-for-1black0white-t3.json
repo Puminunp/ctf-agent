@@ -1,0 +1,32 @@
+{
+  "run_id": "agent-fix-for-1black0white-t3",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "2619f7777100c137176c2fe62d0741e616cea5f2",
+    "dirty": false
+  },
+  "started_unix": 1794338704.3443117,
+  "reset_s": 2.375,
+  "export_inventory": [
+    {
+      "file": "qr_code.txt",
+      "sha256": "f208f499e2d842ec50911631ce7f7c73640594a2e2ef866e7f842eff0ac3996f",
+      "bytes": 283
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 8,
+  "llm_calls": 8,
+  "tool_calls": 8,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 8,
+      "verified": true,
+      "candidate_sha256_12": "d02cc7d16502"
+    }
+  ]
+}

@@ -1,10 +1,33 @@
 # CTF agent (final project, part 1)
 
-A tool-using CTF solver plus a trusted controller. One fixed configuration (`config_id = agent`) is run
-3 times per challenge. Every attempt is written to `results.jsonl` in the course's A4 schema with a JSONL trace.
+A tool-using CTF solver plus a trusted controller. Two configurations are compared, each run 3 times on each of 10 challenges
+(30 attempts). Every attempt is written to `results.jsonl` in the course's A4 schema with a JSONL trace.
 
-**Selected configuration:** `configs/agent.json` + `prompts/system.md` (model `claude-haiku-5-5` via the Duke AI Gateway;
-not frozen until the scored run starts).
+| Config | File | `config_id` | Recorded at | Result (30 attempts) |
+|---|---|---|---|---|
+| Baseline | `configs/agent.json` | `agent` | tag `frozen-eval-v1` (commit `7082312`), output `runs/eval/` | 24 solved, 6 HTTP 429 errors |
+| **Selected for the final** | `configs/agent-fix.json` | `agent-fix` | commit `2619f77`, output `runs/fix/` | 30 solved, 0 errors |
+
+Both use `prompts/system.md`, model `claude-haiku-5-5` through the Duke AI Gateway, and the same tools and limits. The only
+difference is the gateway retry policy (`agent-fix`: up to 6 retries, waits up to 60 s, honors `Retry-After`, 150 s total wait per call).
+
+**Launch command for the selected configuration** (PowerShell, Docker Desktop running, Duke VPN or network connected, `LITELLM_TOKEN` set):
+
+```powershell
+.venv\Scripts\python.exe scripts/run_attempts.py --manifest evaluation_manifest.json `
+  --dataset external/ctftiny_files/CTFTiny-main/ctftiny.json --config configs/agent-fix.json --out runs/fix --trials 3
+```
+
+Comparison, metrics and plots (pass@k, solve rate and variance, calls, tokens, cost, change in percentage points):
+
+```powershell
+.venv\Scripts\python.exe scripts/compare_configs.py --manifest evaluation_manifest.json --a runs/eval --b runs/fix --out runs/comparison.json --md runs/comparison.md
+.venv\Scripts\python.exe -m pip install -r requirements-plots.txt   # once
+.venv\Scripts\python.exe scripts/make_plots.py --manifest evaluation_manifest.json --a runs/eval --b runs/fix --out runs/plots
+```
+
+The draft report is `REPORT_DRAFT.md`; the hand-off notes are `HANDOFF.md`. `runs/fix_aborted_docker_down/` and
+`runs/fix_aborted_network_down/` hold two failed launches (Docker stopped; gateway unreachable) kept as incident records, not results.
 
 > The professor confirmed on Nov 9 that the guide's "kit" (`course-compose.yaml`, private verifier, helper scripts, shared
 > Linux machine) was an artifact of writing the guide, and that implementation follows the NYU repos. So the isolated

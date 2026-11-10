@@ -1,0 +1,26 @@
+{
+  "run_id": "agent-fix-web-smug-dino-t3",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "2619f7777100c137176c2fe62d0741e616cea5f2",
+    "dirty": false
+  },
+  "started_unix": 1794338744.3248217,
+  "reset_s": 2.547,
+  "export_inventory": [],
+  "stop_reason": "verified",
+  "steps": 7,
+  "llm_calls": 7,
+  "tool_calls": 7,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 7,
+      "verified": true,
+      "candidate_sha256_12": "0c9144ded396"
+    }
+  ]
+}

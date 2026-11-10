@@ -31,7 +31,15 @@ Fill in the `TODO` fields as Part 1 finishes. Part 2 reads this first.
   a controlled comparison of two configurations (20 pts), pass@1/2/3, average solve rate and variance, time/calls/tokens/cost, solve-rate
   change in percentage points with trace citations, a failure analysis, and a video or demo of a SUCCESSFUL autonomous run (3 pts).
   Hints: a smaller tool-capable model while debugging (we use `claude-haiku-5-5`); connect to Duke VPN before the AI Gateway.
-- **Update Nov 10 evening: the full `agent-fix` run could not be completed.** Launch 1 failed in 0.3 s per attempt because Docker Desktop's
+- **UPDATE Nov 10 night: the full `agent-fix` run is DONE (third launch, Duke VPN connected): 30 of 30 solved, 0 infrastructure errors**, recorded at
+  commit `2619f77` (no attempt flagged dirty), output `runs/fix/` (+ `summary.json`, `per_challenge.csv`). Comparison with the baseline
+  (`runs/comparison.md` / `.json`): success 80.0% -> 100.0% (+20.0 pp), pass@1/2/3 70/90/100 -> 100/100/100, solve rate by trial 70/80/90 -> 100/100/100,
+  mean 80.0 -> 100.0, variance 100.0 -> 0.0 pp^2, wall-clock 1,261.5 -> 1,819.6 s (+44%), model calls 201 -> 225, tokens 1.34M -> 1.55M (+214k, +16%),
+  estimated cost $0.197 -> $0.235. Plots are in `runs/plots/` (4 PNGs). `REPORT_DRAFT.md` section 5 is updated with the full comparison; the 6-slot
+  re-run below is now just an earlier check. The selected configuration for the final is `agent-fix`. Both configs are at the ceiling on these 10
+  challenges, so the comparison measures robustness to rate limits, not skill. Remaining: video of a fresh successful run, contribution statements,
+  trim the report to about 3 pages, clean-clone README check, submit. The text below about the run being impossible is HISTORY.
+- (History) Earlier on Nov 10: the full `agent-fix` run could not be completed. Launch 1 failed in 0.3 s per attempt because Docker Desktop's
   engine had stopped (30 infrastructure errors, no tokens; kept in `runs/fix_aborted_docker_down/`). Launch 2 failed after ~3.5 min per attempt because
   the Duke AI Gateway became unreachable from this PC (needs Duke VPN or campus network; the owner cannot use the VPN); stopped after 7 records
   (`runs/fix_aborted_network_down/`). Nothing was lost; both are harness failures, not results. Fallback comparison: baseline vs `agent-fix` on the

@@ -1,0 +1,37 @@
+{
+  "run_id": "agent-fix-rev-whataxor-t3",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "2619f7777100c137176c2fe62d0741e616cea5f2",
+    "dirty": false
+  },
+  "started_unix": 1794338536.8242493,
+  "reset_s": 2.172,
+  "export_inventory": [
+    {
+      "file": "whataxor",
+      "sha256": "6bc9edc45f0121688b5024768d5591c20289dd70e391477d96477b6ecddefaf3",
+      "bytes": 8528
+    },
+    {
+      "file": "readme.txt",
+      "sha256": "69d4b4936964b95a855dcdf7d753fb8fdcac1fb010a86278e0e5848ddb057159",
+      "bytes": 792
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 5,
+  "llm_calls": 5,
+  "tool_calls": 5,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 5,
+      "verified": true,
+      "candidate_sha256_12": "707e9186da17"
+    }
+  ]
+}

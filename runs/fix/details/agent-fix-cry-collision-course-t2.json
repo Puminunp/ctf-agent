@@ -1,0 +1,32 @@
+{
+  "run_id": "agent-fix-cry-collision-course-t2",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "2619f7777100c137176c2fe62d0741e616cea5f2",
+    "dirty": false
+  },
+  "started_unix": 1794338178.522703,
+  "reset_s": 2.812,
+  "export_inventory": [
+    {
+      "file": "handout.zip",
+      "sha256": "5345044c29b8559cb0457b83b20c041caaca820a3efb95ed6878994f1eb84214",
+      "bytes": 22366
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 4,
+  "llm_calls": 4,
+  "tool_calls": 4,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 4,
+      "verified": true,
+      "candidate_sha256_12": "260026b834ef"
+    }
+  ]
+}

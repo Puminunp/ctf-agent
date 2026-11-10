@@ -10,7 +10,7 @@ Model: `claude-haiku-5-5` through the Duke AI Gateway. Benchmark: 10 CTFTiny cha
 We built a tool-using solver agent and a trusted controller, checked the isolation controls from inside the sandbox, piloted on four development challenges,
 froze one configuration (`agent`) and ran it 3 times on each of 10 challenges (30 attempts). 24 attempts solved the challenge. The other 6 were not agent
 failures: each stopped on an HTTP 429 rate limit from the gateway after the client's 2 short retries. We traced the problem, changed only the retry policy
-(`agent-fix`), and re-ran exactly those 6 slots: 6 of 6 solved. A full 30-attempt run of `agent-fix` could not be completed (section 6).
+(`agent-fix`), and re-ran exactly those 6 slots: 6 of 6 solved. We then ran `agent-fix` fresh on all 30 slots: 30 of 30 solved with 0 infrastructure errors, +20.0 percentage points over the baseline's 80.0% for +558 s, +214k tokens and about +$0.04 (section 5).
 
 ## 2. Architecture and controls
 
@@ -76,35 +76,45 @@ The client retried twice, waiting 1 s then 2 s, and ignored `Retry-After`. Two a
 
 **Change.** Config `agent-fix`; the baseline's behaviour is unchanged by default. Three unit tests cover it (baseline gives up after 2 retries; the fix survives repeated 429s and honors `Retry-After`; the retry budget stops waiting).
 
-**Controlled comparison on the same 6 slots** (one run each; `scripts/compare_rerun.py`):
+**Controlled comparison: `agent` vs `agent-fix`, each run on all 10 challenges x 3 trials** (30 attempts each, fresh state for every attempt; `agent-fix` ran at commit `2619f77`, the baseline at `7082312`; `scripts/compare_configs.py`, plots in `runs/plots/`).
 
-| | Baseline `agent` | `agent-fix` | Change |
+| Metric (all attempts counted) | `agent` | `agent-fix` | Change |
 |---|---|---|---|
-| Solved | 0 of 6 (6 errors) | 6 of 6 | **+100 percentage points** |
-| Wall-clock | 321.8 s | 956.3 s | +634.5 s |
-| Model / tool calls | 34 / 34 | 72 / 72 | +38 / +38 |
-| Tokens in / out | 198,024 / 38,637 | 707,041 / 101,022 | +571,402 total |
-| Estimated cost | $0.039 | $0.121 | +$0.082 |
+| Attempts solved | 24 of 30 | **30 of 30** | |
+| Infrastructure errors (HTTP 429) | 6 | 0 | -6 |
+| Success rate | 80.0% | 100.0% | **+20.0 percentage points** |
+| Success rate excluding infrastructure errors | 100.0% | 100.0% | +0.0 pp |
+| Pass@1 / Pass@2 / Pass@3 | 70 / 90 / 100% | 100 / 100 / 100% | +30 / +10 / +0 pp |
+| Solve rate by trial 1 / 2 / 3 | 70 / 80 / 90% | 100 / 100 / 100% | |
+| Mean solve rate, sample variance | 80.0%, 100.0 pp² | 100.0%, 0.0 pp² | +20.0 pp, -100.0 pp² |
+| Wall-clock, total | 1,261.5 s (42.1 s per attempt) | 1,819.6 s (60.7 s per attempt) | +558.1 s (+44%) |
+| Model calls / tool calls | 201 / 202 | 225 / 225 | +24 / +23 |
+| Tokens in / out | 1,177,441 / 159,101 | 1,350,462 / 199,866 | +213,786 total (+16%) |
+| Estimated cost (list price) | $0.197 | $0.235 | +$0.038 |
 
-The baseline attempts stopped early, so the re-run costs more simply because it finished the work. If the 6 slots replace their baseline records, the merged result is 30 of 30; the as-recorded baseline stays 24 of 30 and is the official `agent` result.
-Per slot, the re-run solved `rev-rap` t1 in 13 steps, t2 in 14, `for-1black0white` t1 in 7, `web-smug-dino` t1 in 6, `rev-maze` t2 in 28 and `cry-hybrid2` t3 in 4.
+Successes out of 3 per challenge, `agent` then `agent-fix`: `cry-hybrid2` 2 / 3, `rev-rap` 1 / 3, `for-1black0white` 2 / 3, `web-smug-dino` 2 / 3, `rev-maze` 2 / 3; every other challenge 3 / 3 in both. Largest `agent-fix` attempt: `rev-maze` t3, 22 steps, 298,374 tokens, 537.9 s, under the 400,000 / 900 s limits.
 
-**What this does and does not show.** It supports the hypothesis but does not prove it: six slots, one run each, hours after the baseline, so the gateway may simply have been quieter. The traces do not log retries, so no step shows a 429 being absorbed (next improvement below).
+**Where the extra time and tokens went.** The six slots that stopped on a 429 in the baseline stopped early, so the baseline never paid for them. In `agent-fix` they all finished (trace step counts): `rev-rap` t1 in 10 steps (baseline stopped after 5), `rev-rap` t2 in 12 (stopped after 5), `for-1black0white` t1 in 8 (stopped after 13), `web-smug-dino` t1 in 5 (stopped before the first model reply), `rev-maze` t2 in 19 (stopped after 11), `cry-hybrid2` t3 in 4 (stopped before the first model reply). On the 24 slots that finished in both runs, `agent-fix` used about 5% fewer tokens (1,043,355 vs 1,099,881) but about 34% more wall-clock time (1,262 s vs 940 s). More waiting with fewer tokens is consistent with `agent-fix` waiting through rate limits, but retries are not logged, so no trace step proves it, and run-to-run variation in the model's own trajectories also changes the length of individual attempts ( for example `for-1black0white` averaged 34.5 s in the baseline's finished attempts and 65.5 s in `agent-fix`).
+
+**Earlier, smaller check.** Before the full run, re-running only the 6 failed slots once under `agent-fix` also gave 6 of 6 (`runs/rerun/`, `scripts/compare_rerun.py`).
+
+**What this does and does not show.** The effect on solve rate is measured: +20.0 pp, all of it from removing the 6 gateway losses, since the unchanged agent solved every attempt that ran to a conclusion. It supports the hypothesis but does not prove it: the two runs took place on different days and loads, so a quieter gateway could also explain fewer 429s, and the traces do not log retries. Both configurations sit at or near the ceiling on these 10 challenges, so this comparison measures robustness to rate limits, not problem-solving skill.
 
 ## 6. Failure analysis and limitations
 
-**Annotated case: `agent-for-1black0white-t1`.** Steps 1 to 5: the agent inspected `qr_code.txt`, found 29 rows of 29-bit numbers and recognised a QR code. Steps 6 to 7: no imaging or QR library was installed, so it wrote its own decoder instead of fetching one. Steps 8 to 12: it decoded text with one wrong character, tried to fix it with Reed-Solomon error correction, rewrote that code once and began brute-forcing a bit flip. At its 13th model call (about 90 s in, 69,578 input tokens already spent) the gateway returned 429 after two retries and the attempt ended as `infrastructure_error`. The agent's approach was sound; the loss was infrastructure. Testable improvement: log each retry as an `llm_retry` event (status, wait, attempt) and count attempts lost to transient errors per 30 attempts: baseline 6, `agent-fix` expected 0.
+**Annotated case: `agent-for-1black0white-t1`.** Steps 1 to 5: the agent inspected `qr_code.txt`, found 29 rows of 29-bit numbers and recognised a QR code. Steps 6 to 7: no imaging or QR library was installed, so it wrote its own decoder instead of fetching one. Steps 8 to 12: it decoded text with one wrong character, tried to fix it with Reed-Solomon error correction, rewrote that code once and began brute-forcing a bit flip. After 13 completed model calls (about 90 s in, 69,578 input tokens spent) the 14th call got a 429 twice in a row and the attempt ended as `infrastructure_error`. Under `agent-fix` the same slot solved in 8 steps. The agent's approach was sound; the loss was infrastructure. Testable improvement: log each retry as an `llm_retry` event (status, wait, attempt) and count attempts lost to transient errors per 30 attempts: baseline 6, `agent-fix` expected 0.
 
 **Limitations and weaknesses**
 - The agent solved every attempt that ran to a conclusion (24 of 24). The easy and moderate challenges give little signal about where it fails; harder challenges or a harder set are needed before the final.
-- A full 30-attempt run of `agent-fix` was not completed. The first launch failed in 0.3 s per attempt because Docker Desktop's engine had stopped (30 records, 0 tokens, kept in `runs/fix_aborted_docker_down/`). After restarting Docker, the second launch failed after about 3.5 minutes per attempt because the gateway became unreachable from the machine (no VPN or campus network); we stopped it after 7 records (`runs/fix_aborted_network_down/`). Both are harness failures, not results.
-- Token use grows with every step because the history is re-sent: input per call rose from 1.4k to 12.7k on `rev-beleaf`. `rev-maze` t2 under `agent-fix` used about 418k tokens, just over the 400k cap, which is checked before each model call.
+- Two earlier launches of the full `agent-fix` run were harness failures, not results, and are kept in the repository: the first failed in 0.3 s per attempt because Docker Desktop's engine had stopped (30 records, 0 tokens, `runs/fix_aborted_docker_down/`); the second failed after about 3.5 minutes per attempt because the gateway was unreachable from the machine, and was stopped after 7 records (`runs/fix_aborted_network_down/`). The third launch, over the Duke VPN, is the reported run (`runs/fix/`).
+- Token use grows with every step because the history is re-sent: input per call rose from 1.4k to 12.7k on `rev-beleaf`. The heaviest `agent-fix` attempt (`rev-maze` t3, 298k tokens) is within the 400k cap, but an earlier `rev-maze` re-run reached about 418k, just over it, because the cap is checked before each model call.
+- Reaching the gateway needed the Duke VPN or a Duke network at times. The gateway was unreachable (connection timeout on port 443) while the VPN was off.
 - Cost is an estimate at list price; the Duke gateway may bill differently. Only one small model was tested.
 - Retries are not logged. The Windows setup needed workarounds (the datasets contain a folder named `get_it?`, so a `git clone` fails on Windows; we used the GitHub ZIP).
 
 ## 7. Configuration for the final (Nov 18) and trade-off
 
-Carry `agent-fix`. It changes only the retry policy, so it cannot reduce solve rate, and it removed all 6 rate-limit losses in the re-run. Trade-off: a call can now wait up to 150 s, which spends wall-clock time (the attempt limit stays 900 s). Before the competition: log retries, consider trimming old tool output to cut tokens on hard challenges, and test a stronger model on Moderate and Hard challenges against practice challenges for regressions.
+Carry `agent-fix` (`configs/agent-fix.json`, launched with `scripts/run_attempts.py --config configs/agent-fix.json`). It changes only the retry policy; in the full comparison it lost no attempt to a rate limit (0 vs 6) and solved 30 of 30. Trade-off: a call can now wait up to 150 s, which spends wall-clock time (the attempt limit stays 900 s). Before the competition: log retries, consider trimming old tool output to cut tokens on hard challenges, and test a stronger model on Moderate and Hard challenges against practice challenges for regressions.
 
 ## 8. Prior exposure and disclosures
 

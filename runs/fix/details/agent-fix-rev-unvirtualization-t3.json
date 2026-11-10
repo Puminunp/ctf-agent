@@ -1,0 +1,32 @@
+{
+  "run_id": "agent-fix-rev-unvirtualization-t3",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "2619f7777100c137176c2fe62d0741e616cea5f2",
+    "dirty": false
+  },
+  "started_unix": 1794338551.133215,
+  "reset_s": 2.547,
+  "export_inventory": [
+    {
+      "file": "prog",
+      "sha256": "dd6dd658a4626753a02b6884497095a2291301b0d8241eea54a0e16f35bf349d",
+      "bytes": 297056
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 6,
+  "llm_calls": 6,
+  "tool_calls": 6,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 6,
+      "verified": true,
+      "candidate_sha256_12": "a54a31faa35b"
+    }
+  ]
+}

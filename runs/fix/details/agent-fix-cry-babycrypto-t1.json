@@ -1,0 +1,32 @@
+{
+  "run_id": "agent-fix-cry-babycrypto-t1",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "2619f7777100c137176c2fe62d0741e616cea5f2",
+    "dirty": false
+  },
+  "started_unix": 1794337467.0591338,
+  "reset_s": 2.234,
+  "export_inventory": [
+    {
+      "file": "ciphertext.txt",
+      "sha256": "bca6d18795f6f31ba3d88a89a8166025deb4954f51264b9346592a51ca2f96ac",
+      "bytes": 432
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 4,
+  "llm_calls": 4,
+  "tool_calls": 4,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 4,
+      "verified": true,
+      "candidate_sha256_12": "f8d5f4db80f8"
+    }
+  ]
+}

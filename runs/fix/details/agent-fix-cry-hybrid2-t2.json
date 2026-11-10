@@ -1,0 +1,42 @@
+{
+  "run_id": "agent-fix-cry-hybrid2-t2",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "2619f7777100c137176c2fe62d0741e616cea5f2",
+    "dirty": false
+  },
+  "started_unix": 1794337863.4589562,
+  "reset_s": 2.281,
+  "export_inventory": [
+    {
+      "file": "encrypted_flag.txt",
+      "sha256": "04ad2cebc6efd60ca382ddd6e9284dd25bbe4484e7b63005f6110f1dc8dba5aa",
+      "bytes": 121
+    },
+    {
+      "file": "values.txt",
+      "sha256": "cce50ac0d3271d6ecbf9f5a4f23cf568a3a22554e4a1e2e26469715a698e33e3",
+      "bytes": 1843
+    },
+    {
+      "file": "RSA.py",
+      "sha256": "d541c5f2dd7d8cbeb5e1567c6d7e7273c590ef64409b8d261126cc2b170d9a47",
+      "bytes": 960
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 5,
+  "llm_calls": 5,
+  "tool_calls": 5,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 5,
+      "verified": true,
+      "candidate_sha256_12": "717e9c3a5f2d"
+    }
+  ]
+}
