@@ -43,6 +43,8 @@ def main() -> None:
     ap.add_argument("--trials", type=int, default=3)
     ap.add_argument("--only", action="append", help="run just this challenge ID (repeatable)")
     ap.add_argument("--max-attempts", type=int, help="stop after this many attempts (use for pilots)")
+    ap.add_argument("--slot", action="append", metavar="ID:TRIAL",
+                    help="run exactly this (challenge, trial) slot, repeatable; overrides --only/--trials")
     ap.add_argument("--sample-type", default="live", choices=["live", "synthetic"])
     args = ap.parse_args()
 
@@ -55,27 +57,32 @@ def main() -> None:
         sys.exit("set LITELLM_TOKEN in the controller environment (see README)")
 
     system_prompt = (ROOT / cfg.system_prompt_file).read_text(encoding="utf-8")
-    llm = GatewayClient(base_url, token, cfg.model, cfg.temperature,
-                        cfg.limits.llm_timeout_s, cfg.limits.llm_retries)
+    lim = cfg.limits
+    llm = GatewayClient(base_url, token, cfg.model, cfg.temperature, lim.llm_timeout_s, lim.llm_retries,
+                        backoff_cap_s=lim.llm_backoff_cap_s, honor_retry_after=lim.llm_honor_retry_after,
+                        retry_budget_s=lim.llm_retry_budget_s)
     ds = Dataset(args.dataset)
     ctl = Controller(cfg, system_prompt, llm,
                      ComposeEnvironment(cfg.environment, work_dir=Path(args.out) / "compose"), args.out, ds.load,
                      repo_dir=ROOT, sample_type=args.sample_type, secrets=[token])
 
-    ids = args.only or manifest_ids(args.manifest)
     done, ran = ctl.done_slots(), 0
-    for trial in range(1, args.trials + 1):
-        for cid in ids:
-            if (cid, trial) in done:
-                print(f"skip {cid} trial {trial}: already recorded")
-                continue
-            if args.max_attempts is not None and ran >= args.max_attempts:
-                print("attempt cap reached; stopping")
-                return
-            rec = ctl.run_one(cid, trial)
-            ran += 1
-            print(f"{rec['run_id']}: {rec['status']} verified={rec['verified']} {rec['elapsed_s']}s "
-                  f"tokens in/out={rec['input_tokens']}/{rec['output_tokens']}")
+    if args.slot:
+        plan = [(s.rsplit(":", 1)[0], int(s.rsplit(":", 1)[1])) for s in args.slot]
+    else:
+        ids = args.only or manifest_ids(args.manifest)
+        plan = [(cid, trial) for trial in range(1, args.trials + 1) for cid in ids]
+    for cid, trial in plan:
+        if (cid, trial) in done:
+            print(f"skip {cid} trial {trial}: already recorded")
+            continue
+        if args.max_attempts is not None and ran >= args.max_attempts:
+            print("attempt cap reached; stopping")
+            return
+        rec = ctl.run_one(cid, trial)
+        ran += 1
+        print(f"{rec['run_id']}: {rec['status']} verified={rec['verified']} {rec['elapsed_s']}s "
+              f"tokens in/out={rec['input_tokens']}/{rec['output_tokens']}")
 
 
 if __name__ == "__main__":

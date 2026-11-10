@@ -1,0 +1,32 @@
+{
+  "run_id": "agent-rev-maze-t3",
+  "config_fingerprint": "aeae73ba8fec536f",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "708231216df9c47f1cb3bb6d7060e7bfc3d48980",
+    "dirty": false
+  },
+  "started_unix": 1794287230.358228,
+  "reset_s": 3.078,
+  "export_inventory": [
+    {
+      "file": "maze_public",
+      "sha256": "9164bc9c66bf90154ff4a2d16e3c4678b3016a20109819e100ebd8289a9a9f4c",
+      "bytes": 30240
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 15,
+  "llm_calls": 15,
+  "tool_calls": 15,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 15,
+      "verified": true,
+      "candidate_sha256_12": "1922b05061cb"
+    }
+  ]
+}

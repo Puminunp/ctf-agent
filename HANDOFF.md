@@ -52,18 +52,21 @@ Fill in the `TODO` fields as Part 1 finishes. Part 2 reads this first.
 
 | Item | Value |
 |---|---|
-| Attempts finished / running / queued (of 30) | TODO |
-| Where results are | `runs/eval/results.jsonl`, `runs/eval/traces/`, `runs/eval/details/` |
-| Incidents (blocked requests, scope_violation, infrastructure_error, loops) | TODO |
-| Tokens and quota used so far | TODO (check the Duke AI dashboard; daily limit unknown) |
+| Attempts finished / running / queued (of 30) | 30 finished (Nov 10), commit `7082312` / tag `frozen-eval-v1`, config `agent`, `claude-haiku-5-5`. Wall-clock 1,261 s total. |
+| Where results are | `runs/eval/results.jsonl`, `runs/eval/traces/`, `runs/eval/details/`, `runs/eval/summary.json`, `runs/eval/per_challenge.csv`, console log `runs/eval_console.log` |
+| Outcome as recorded | 24 `solved`, 6 `infrastructure_error`, 0 `no_flag`/`wrong_flag`/`timeout`/`budget_exhausted`, 0 `scope_violation`. Overall rate is `null` because 5 challenges are incomplete (summary rule). Of the 24 attempts that ran to a conclusion, all 24 solved. |
+| Incidents | 6 x HTTP 429 from the Duke gateway after the client's 2 retries (waits 1 s, 2 s): `rev-rap` t1 and t2, `for-1black0white` t1, `web-smug-dino` t1, `rev-maze` t2, `cry-hybrid2` t3. Two failed at step 0 within 3.5 s (`web-smug-dino` t1, `cry-hybrid2` t3), right after token-heavy attempts. Zero blocked requests, zero scope violations. |
+| Tokens (known) | 1,177,441 input + 159,101 output across 30 attempts; 2 attempts have null usage (they failed before any model reply). 201 model calls, 202 tool calls. Heaviest: `rev-maze` (about 164k tokens, 204 s mean). |
+| Per-challenge (recorded) | successes of 3: `cry-hybrid2` 2, `rev-whataxor` 3, `rev-unvirtualization` 3, `cry-babycrypto` 3, `rev-rap` 1, `for-1black0white` 2, `web-smug-dino` 2, `cry-collision-course` 3, `pwn-bigboy` 3, `rev-maze` 2. The shortfalls are all infrastructure_error, not agent failures. |
 
 ## Trace-driven change
 
 | Item | Value |
 |---|---|
-| Problem observed (run_id, step numbers) | TODO |
-| Change made (prompt / tool description / validation / planning / memory) | TODO |
-| Follow-up check and result | TODO. Say "proposed" if untested; do not call an untested change "measured". |
+| Problem observed (run_id, step numbers) | 6 of 30 attempts ended `infrastructure_error: HTTP 429` (list above), e.g. `agent-rev-rap-t1` (5 steps in), `agent-for-1black0white-t1` (13 steps in), `agent-web-smug-dino-t1` and `agent-cry-hybrid2-t3` (step 0, 3.5 s). Look at the last `llm_error` event in each trace. The client retried only twice, waiting 1 s then 2 s, and ignored any Retry-After header. |
+| Hypothesis | A 429 is a transient rate limit. If the client waits longer (exponential up to 60 s, honoring Retry-After, up to 6 retries, 150 s total wait per call), those calls succeed and the 6 slots can be completed, without raising the token budget. |
+| Change made | `configs/agent-fix.json` (`config_id = agent-fix`): `llm_retries 6`, `llm_backoff_cap_s 60`, `llm_honor_retry_after true`, `llm_retry_budget_s 150`. Code: `ctfagent/llm.py`, `ctfagent/config.py` (defaults keep the baseline behaviour). 3 new unit tests (baseline gives up after 2 retries; fix survives repeated 429 and honors Retry-After; budget stops waiting). The model, prompt, tools and other limits are unchanged. |
+| Follow-up check and result | NOT RUN YET. Plan: `run_attempts.py --config configs/agent-fix.json --out runs/rerun --slot rev-rap:1 --slot rev-rap:2 --slot for-1black0white:1 --slot web-smug-dino:1 --slot rev-maze:2 --slot cry-hybrid2:3`. Report separately from the baseline: baseline records stay as recorded; do not overwrite them. Say "proposed" until it has run. Check with the professor whether re-running infrastructure_error slots is acceptable ("follow instructor guidance"). |
 
 ## Environment controls evidence (for the report)
 

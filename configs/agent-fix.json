@@ -1,0 +1,30 @@
+{
+  "config_id": "agent-fix",
+  "model": "claude-haiku-5-5",
+  "temperature": 0.0,
+  "system_prompt_file": "prompts/system.md",
+  "repeat_hint": false,
+  "limits": {
+    "wall_clock_s": 900,
+    "max_steps": 60,
+    "max_total_tokens": 400000,
+    "max_wrong_flags": 5,
+    "max_idle_turns": 3,
+    "tool_timeout_s": 60,
+    "max_output_chars": 8000,
+    "llm_timeout_s": 120,
+    "llm_retries": 6,
+    "llm_backoff_cap_s": 60,
+    "llm_honor_retry_after": true,
+    "llm_retry_budget_s": 150
+  },
+  "environment": {
+    "solver_image": "ctf-solver:latest",
+    "target_host": "target",
+    "workdir": "/workspace",
+    "memory": "2g",
+    "cpus": 1.0,
+    "pids_limit": 512,
+    "project_prefix": "ctf"
+  }
+}

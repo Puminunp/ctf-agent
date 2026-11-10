@@ -108,6 +108,62 @@ class Gateway(unittest.TestCase):
         r = c.complete([{"role": "user", "content": "x"}], [])
         self.assertEqual((r.input_tokens, r.output_tokens, calls["n"], calls["auth"]), (7, 3, 2, "Bearer tok-abc"))
 
+    def _serve_429(self, retry_after=None, fail_times=3):
+        calls = {"n": 0}
+        ok = json.dumps({"choices": [{"message": {"content": "hi"}}]}).encode()
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                self.rfile.read(int(self.headers["Content-Length"]))
+                calls["n"] += 1
+                if calls["n"] <= fail_times:
+                    self.send_response(429)
+                    if retry_after:
+                        self.send_header("Retry-After", retry_after)
+                    self.end_headers()
+                    self.wfile.write(b"{}")
+                else:
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(ok)
+
+            def log_message(self, *a):
+                pass
+
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.server_close)
+        self.addCleanup(srv.shutdown)
+        return f"http://127.0.0.1:{srv.server_port}/v1", calls
+
+    def test_baseline_gives_up_after_two_retries_on_repeated_429(self):
+        url, calls = self._serve_429(fail_times=3)
+        waits = []
+        c = GatewayClient(url, "t", "m", retries=2, sleep=waits.append)
+        with self.assertRaises(LLMError) as cm:
+            c.complete([], [])
+        self.assertIn("429", str(cm.exception))
+        self.assertEqual((calls["n"], waits), (3, [1, 2]))
+
+    def test_fix_survives_repeated_429_and_honors_retry_after(self):
+        url, calls = self._serve_429(retry_after="20", fail_times=3)
+        waits = []
+        c = GatewayClient(url, "t", "m", retries=6, sleep=waits.append, backoff_cap_s=60,
+                          honor_retry_after=True, retry_budget_s=150)
+        r = c.complete([], [])
+        self.assertEqual((r.content, calls["n"]), ("hi", 4))
+        self.assertEqual(waits, [20, 20, 20])
+
+    def test_retry_budget_stops_waiting(self):
+        url, calls = self._serve_429(retry_after="50", fail_times=99)
+        waits = []
+        c = GatewayClient(url, "t", "m", retries=6, sleep=waits.append, backoff_cap_s=60,
+                          honor_retry_after=True, retry_budget_s=120)
+        with self.assertRaises(LLMError):
+            c.complete([], [])
+        self.assertLessEqual(sum(waits), 120)
+        self.assertEqual(waits, [50, 50])
+
     def test_error_message_never_contains_token(self):
         url, _ = self._serve([401])
         c = GatewayClient(url, "tok-abc", "m", retries=2, sleep=lambda s: None)

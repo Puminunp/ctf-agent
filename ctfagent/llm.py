@@ -38,7 +38,8 @@ class GatewayClient:
     RETRY_STATUS = {429, 500, 502, 503, 504}
 
     def __init__(self, base_url: str, token: str, model: str, temperature: float = 0.0,
-                 timeout_s: float = 120.0, retries: int = 2, sleep=time.sleep):
+                 timeout_s: float = 120.0, retries: int = 2, sleep=time.sleep,
+                 backoff_cap_s: float = 8.0, honor_retry_after: bool = False, retry_budget_s: float = 1e9):
         if not base_url or not token or not model:
             raise LLMError("base_url, token and model are all required")
         self.url = base_url.rstrip("/") + "/chat/completions"
@@ -48,6 +49,18 @@ class GatewayClient:
         self.timeout_s = timeout_s
         self.retries = retries
         self._sleep = sleep
+        self.backoff_cap_s = backoff_cap_s
+        self.honor_retry_after = honor_retry_after
+        self.retry_budget_s = retry_budget_s
+
+    def _wait_time(self, attempt: int, retry_after: str | None) -> float:
+        wait = min(2 ** attempt, self.backoff_cap_s)
+        if self.honor_retry_after and retry_after:
+            try:
+                wait = max(wait, min(float(retry_after), self.backoff_cap_s))
+            except ValueError:
+                pass
+        return wait
 
     def complete(self, messages: list[dict], tools: list[dict]) -> LLMResponse:
         body = json.dumps({
@@ -55,9 +68,10 @@ class GatewayClient:
             "tool_choice": "auto", "temperature": self.temperature,
         }).encode()
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self._token}"}
-        problem = "unknown"
+        problem, retry_after, waited = "unknown", None, 0.0
         for attempt in range(self.retries + 1):
             t0 = time.monotonic()
+            retry_after = None
             try:
                 req = urllib.request.Request(self.url, data=body, headers=headers, method="POST")
                 with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
@@ -65,6 +79,7 @@ class GatewayClient:
                 return parse_response(payload, time.monotonic() - t0)
             except urllib.error.HTTPError as e:
                 problem = f"HTTP {e.code}"
+                retry_after = e.headers.get("Retry-After") if e.headers else None
                 if e.code not in self.RETRY_STATUS:
                     break
             except (urllib.error.URLError, TimeoutError, OSError) as e:
@@ -72,7 +87,11 @@ class GatewayClient:
             except (ValueError, KeyError) as e:
                 raise LLMError(f"unreadable gateway response ({type(e).__name__})") from None
             if attempt < self.retries:
-                self._sleep(min(2 ** attempt, 8))
+                wait = self._wait_time(attempt, retry_after)
+                if waited + wait > self.retry_budget_s:
+                    break
+                self._sleep(wait)
+                waited += wait
         raise LLMError(f"gateway call failed: {problem}")
 
 

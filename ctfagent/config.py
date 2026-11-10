@@ -19,6 +19,10 @@ class Limits:
     max_output_chars: int = 8000     # tool output returned to the model
     llm_timeout_s: float = 120.0
     llm_retries: int = 2
+    # Retry policy for 429/5xx. Defaults reproduce the frozen baseline (frozen-eval-v1).
+    llm_backoff_cap_s: float = 8.0         # longest single wait; wait = min(2**attempt, cap)
+    llm_honor_retry_after: bool = False    # obey the gateway's Retry-After header (capped by the cap)
+    llm_retry_budget_s: float = 1e9        # total time one call may spend waiting between retries
 
 
 @dataclass(frozen=True)

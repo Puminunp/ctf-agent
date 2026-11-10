@@ -1,0 +1,26 @@
+{
+  "run_id": "agent-rev-rap-t1",
+  "config_fingerprint": "aeae73ba8fec536f",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "708231216df9c47f1cb3bb6d7060e7bfc3d48980",
+    "dirty": false
+  },
+  "started_unix": 1794285993.7272966,
+  "reset_s": 2.641,
+  "export_inventory": [
+    {
+      "file": "rap",
+      "sha256": "a6a8215fed165eee8a621da4e520dd987f26e8a7d2b07056e47842c9315b73fa",
+      "bytes": 10512
+    }
+  ],
+  "stop_reason": "llm_error: gateway call failed: HTTP 429",
+  "steps": 5,
+  "llm_calls": 5,
+  "tool_calls": 5,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": []
+}
