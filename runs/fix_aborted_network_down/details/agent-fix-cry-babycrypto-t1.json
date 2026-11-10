@@ -1,0 +1,26 @@
+{
+  "run_id": "agent-fix-cry-babycrypto-t1",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "053d3610ccc6100ca6b5817aaaa4301c2af2de19",
+    "dirty": false
+  },
+  "started_unix": 1794335583.9642103,
+  "reset_s": 2.437,
+  "export_inventory": [
+    {
+      "file": "ciphertext.txt",
+      "sha256": "bca6d18795f6f31ba3d88a89a8166025deb4954f51264b9346592a51ca2f96ac",
+      "bytes": 432
+    }
+  ],
+  "stop_reason": "llm_error: gateway call failed: connection problem (URLError)",
+  "steps": 0,
+  "llm_calls": 0,
+  "tool_calls": 0,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": []
+}

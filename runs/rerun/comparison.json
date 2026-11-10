@@ -1,5 +1,39 @@
 {
   "slots_rerun": 6,
+  "same_slots": {
+    "baseline": {
+      "attempts": 6,
+      "solved": 0,
+      "statuses": {
+        "infrastructure_error": 6
+      },
+      "elapsed_s": 321.8,
+      "input_tokens": 198024,
+      "output_tokens": 38637,
+      "model_calls": 34,
+      "tool_calls": 34,
+      "estimated_cost_usd": 0.039
+    },
+    "rerun": {
+      "attempts": 6,
+      "solved": 6,
+      "statuses": {
+        "solved": 6
+      },
+      "elapsed_s": 956.3,
+      "input_tokens": 707041,
+      "output_tokens": 101022,
+      "model_calls": 72,
+      "tool_calls": 72,
+      "estimated_cost_usd": 0.121
+    },
+    "solve_rate_change_pp": 100.0,
+    "elapsed_s_change": 634.5,
+    "tokens_change": 571402,
+    "model_calls_change": 38,
+    "tool_calls_change": 38,
+    "estimated_cost_usd_change": 0.082
+  },
   "baseline_statuses_of_rerun_slots": {
     "infrastructure_error": 6
   },
@@ -16,6 +50,9 @@
       "rerun_elapsed_s": 140.125,
       "rerun_input_tokens": 147079,
       "rerun_output_tokens": 11273,
+      "baseline_elapsed_s": 21.234,
+      "baseline_input_tokens": 22454,
+      "baseline_output_tokens": 1877,
       "baseline_run_id": "agent-rev-rap-t1",
       "rerun_run_id": "agent-fix-rev-rap-t1"
     },
@@ -28,6 +65,9 @@
       "rerun_elapsed_s": 229.313,
       "rerun_input_tokens": 155998,
       "rerun_output_tokens": 14735,
+      "baseline_elapsed_s": 20.468,
+      "baseline_input_tokens": 23562,
+      "baseline_output_tokens": 1882,
       "baseline_run_id": "agent-rev-rap-t2",
       "rerun_run_id": "agent-fix-rev-rap-t2"
     },
@@ -40,6 +80,9 @@
       "rerun_elapsed_s": 33.329,
       "rerun_input_tokens": 20361,
       "rerun_output_tokens": 4197,
+      "baseline_elapsed_s": 90.047,
+      "baseline_input_tokens": 69578,
+      "baseline_output_tokens": 14316,
       "baseline_run_id": "agent-for-1black0white-t1",
       "rerun_run_id": "agent-fix-for-1black0white-t1"
     },
@@ -52,6 +95,9 @@
       "rerun_elapsed_s": 36.343,
       "rerun_input_tokens": 20978,
       "rerun_output_tokens": 2141,
+      "baseline_elapsed_s": 3.5,
+      "baseline_input_tokens": null,
+      "baseline_output_tokens": null,
       "baseline_run_id": "agent-web-smug-dino-t1",
       "rerun_run_id": "agent-fix-web-smug-dino-t1"
     },
@@ -64,6 +110,9 @@
       "rerun_elapsed_s": 474.313,
       "rerun_input_tokens": 350968,
       "rerun_output_tokens": 67367,
+      "baseline_elapsed_s": 182.828,
+      "baseline_input_tokens": 82430,
+      "baseline_output_tokens": 20562,
       "baseline_run_id": "agent-rev-maze-t2",
       "rerun_run_id": "agent-fix-rev-maze-t2"
     },
@@ -76,6 +125,9 @@
       "rerun_elapsed_s": 42.843,
       "rerun_input_tokens": 11657,
       "rerun_output_tokens": 1309,
+      "baseline_elapsed_s": 3.734,
+      "baseline_input_tokens": null,
+      "baseline_output_tokens": null,
       "baseline_run_id": "agent-cry-hybrid2-t3",
       "rerun_run_id": "agent-fix-cry-hybrid2-t3"
     }

@@ -31,8 +31,15 @@ Fill in the `TODO` fields as Part 1 finishes. Part 2 reads this first.
   a controlled comparison of two configurations (20 pts), pass@1/2/3, average solve rate and variance, time/calls/tokens/cost, solve-rate
   change in percentage points with trace citations, a failure analysis, and a video or demo of a SUCCESSFUL autonomous run (3 pts).
   Hints: a smaller tool-capable model while debugging (we use `claude-haiku-5-5`); connect to Duke VPN before the AI Gateway.
-- Consequence for the comparison: the 6-slot re-run is supporting evidence only. The controlled comparison is baseline `agent` (30 attempts,
-  `runs/eval/`) vs `agent-fix` run fresh on all 10 challenges x 3 trials (`runs/fix/`, NOT YET RUN). Then run
+- **Update Nov 10 evening: the full `agent-fix` run could not be completed.** Launch 1 failed in 0.3 s per attempt because Docker Desktop's
+  engine had stopped (30 infrastructure errors, no tokens; kept in `runs/fix_aborted_docker_down/`). Launch 2 failed after ~3.5 min per attempt because
+  the Duke AI Gateway became unreachable from this PC (needs Duke VPN or campus network; the owner cannot use the VPN); stopped after 7 records
+  (`runs/fix_aborted_network_down/`). Nothing was lost; both are harness failures, not results. Fallback comparison: baseline vs `agent-fix` on the
+  SAME 6 slots (`scripts/compare_rerun.py` -> `runs/rerun/comparison.json`): 0/6 -> 6/6 (+100 pp), +634.5 s, +571,402 tokens, +38 model/tool calls, +$0.082
+  (the baseline attempts stopped early). A first full report draft is in `REPORT_DRAFT.md`. If the gateway becomes reachable (campus Wi-Fi or VPN),
+  the full run is one command (below) and the draft's section 5 should then use it.
+- The full comparison, if it can be run: baseline `agent` (30 attempts,
+  `runs/eval/`) vs `agent-fix` run fresh on all 10 challenges x 3 trials (`runs/fix/`, NOT RUN). Then run
   `scripts/compare_configs.py --manifest evaluation_manifest.json --a runs/eval --b runs/fix --out runs/comparison.json --md runs/comparison.md`.
   The baseline's own metrics are already in `runs/baseline_metrics.md` / `.json`.
 - Baseline metrics (config `agent`, all attempts counted, infrastructure errors counted as failures): success 80.0%; pass@1 70.0, pass@2 90.0,

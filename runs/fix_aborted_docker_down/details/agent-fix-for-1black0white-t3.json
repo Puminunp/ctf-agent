@@ -1,0 +1,12 @@
+{
+  "run_id": "agent-fix-for-1black0white-t3",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "57db9606ec7aa127368d94fdec4833439675f7bd",
+    "dirty": false
+  },
+  "started_unix": 1794334790.3620634,
+  "error": "EnvironmentError_: compose down -v --remove-orphans failed: error during connect: Get \"http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.51/containers/json?all=1&filters=%7B%22label%22%3A%7B%22com.docker.compose.config-hash%22%3Atrue%2C%22com.docker.compose.project%3Dctf-for-1black0white%22%3Atrue%7D%7D\": open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified."
+}
