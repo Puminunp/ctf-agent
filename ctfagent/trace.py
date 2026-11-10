@@ -33,6 +33,16 @@ class Trace:
             return [self._clean(v) for v in value]
         return value
 
+    def redact_everywhere(self, secret: str) -> None:
+        """Remove a value from every event already written (used for a verified flag) and from future ones."""
+        if not secret or len(secret) < 8:
+            return
+        self._secrets.append(secret)
+        self.events = [self._clean(e) for e in self.events]
+        if self.path:
+            self.path.write_text("".join(json.dumps(e, ensure_ascii=False) + "\n" for e in self.events),
+                                 encoding="utf-8")
+
     def event(self, type_: str, **fields: Any) -> None:
         record = {"ts": round(self._clock(), 3), "type": type_, **self._clean(fields)}
         self.events.append(record)

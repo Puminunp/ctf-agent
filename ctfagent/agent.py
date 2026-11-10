@@ -125,6 +125,7 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
                 sub = {"step": steps, "verified": ok, "candidate_sha256_12": digest}
                 if ok:
                     trace.event("submission", **sub, candidate="[verified flag withheld]")
+                    trace.redact_everywhere(args["flag"])  # it may also appear in earlier tool output or text
                     submissions.append(sub)
                     verified, status, stop_reason, finished = True, SUCCESS, "verified", True
                     messages.append({"role": "tool", "tool_call_id": call.id, "content": "correct"})

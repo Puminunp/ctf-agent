@@ -31,6 +31,20 @@ class AttemptLoop(unittest.TestCase):
         _, trace = run([reply(call("submit_flag", flag=FLAG))])
         self.assertNotIn(FLAG, str(trace.events))
 
+    def test_verified_flag_is_redacted_from_earlier_tool_output_and_text(self):
+        import tempfile
+        from pathlib import Path
+        ex = FakeExecutor({"python3 solve.py": ExecResult(0, FLAG, False, 0.1)})
+        path = Path(tempfile.mkdtemp()) / "t.jsonl"
+        trace = Trace(path)
+        run_attempt(cfg=make_cfg(), llm=ScriptedLLM([
+            reply(call("run_shell", command="python3 solve.py"), content=f"I think it is {FLAG}"),
+            reply(call("submit_flag", flag=FLAG))]), executor=ex, verifier=HashVerifier(FLAG), trace=trace,
+            system_prompt="s", task_prompt="t", allowed_hosts=set(), clock=FakeClock())
+        self.assertNotIn(FLAG, str(trace.events))
+        self.assertNotIn(FLAG, path.read_text(encoding="utf-8"))
+        self.assertIn("[REDACTED]", path.read_text(encoding="utf-8"))
+
     def test_wrong_flag_is_logged_and_limit_ends_attempt(self):
         res, trace = run([reply(call("submit_flag", flag=f"flag{{wrong{i}}}")) for i in range(5)])
         self.assertEqual((res.status, res.wrong_flags, res.stop_reason), ("wrong_flag", 3, "wrong_flag_limit"))

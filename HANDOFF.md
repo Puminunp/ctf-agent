@@ -9,7 +9,13 @@ Fill in the `TODO` fields as Part 1 finishes. Part 2 reads this first.
 - The professor confirmed there is NO instructor kit (compose file, private verifier, helper scripts, shared Linux machine).
   Those were artifacts of writing the guide. Everything above is ours; the README says so.
 - Controls evidence exists for `rev-checker` and `pwn-puffin`: `runs/controls/isolation_*.json` (all checks passed).
-- NOT done: a full agent attempt, a pilot, any scored attempts. `runs/eval/` does not exist yet.
+- Pilot done (Nov 9): `rev-checker`, 1 attempt, solved in 3 steps (read the script, wrote an inverse script, submitted), 7.7 s,
+  5,706 in / 926 out tokens, no blocked requests. Local only: `runs/pilot/` is git-ignored and its trace predates the flag-redaction
+  fix, so it contains the flag; do not share it. The pilot also found a real bug: the flag showed up in a tool result, so redaction now
+  covers the whole trace once a flag is verified (test added).
+- Implication: an easy challenge solved in one pass gives no failure to learn from. Pilot a harder one (`rev-beleaf` Moderate,
+  `pwn-puffin` with a target) to find the trace problem worth fixing.
+- NOT done: more pilots, the trace-driven change, any scored attempts. `runs/eval/` does not exist yet.
 - Open question for the professor (not answered in his reply): whether the grading table's "controlled comparison" still applies.
   Plan that covers both readings: scored baseline = 3 trials x 10 challenges with `config_id = agent`; then re-test one trace-driven fix
   on 2-3 challenges as a separate config (`agent-fix`) in `runs/followup/`, reported separately.

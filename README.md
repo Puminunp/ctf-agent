@@ -18,7 +18,7 @@ not frozen until the scored run starts).
 | Gateway + tool calling | `scripts/check_toolcall.py` passed for `claude-haiku-5-5` (Nov 9). |
 | Isolated environment (generated compose, solver image) | `scripts/check_isolation.py` passed all controls on `rev-checker` (no target) and `pwn-puffin` (with target). Evidence in `runs/controls/`. |
 | nyuctf loader | Run against `pwn-puffin`; fields match the code. |
-| A full agent attempt (model + container + verifier end to end) | **Not run yet.** |
+| A full agent attempt (model + container + verifier end to end) | One pilot on `rev-checker` (Nov 9): solved in 3 steps, 7.7 s, 5,706 in / 926 out tokens. It is a smoke test, not a score (`runs/pilot/`, git-ignored). Read any trace with `scripts/show_trace.py <trace.jsonl>`. |
 | Flag verification | `HashVerifier` compares against `chal.flag` inside the controller. No external verifier exists. |
 | Result status `solved` | Our name for a verified solve; `scripts/summarize.py` and `scripts/check_results.py` use it. |
 
@@ -102,8 +102,9 @@ controller (trusted, holds the flag)          solver container (unprivileged)
 - **Tokens:** summed from gateway usage; `null` if none reported. `cost_usd` is `null` (no price data).
 - **Answer separation:** the solver gets a sanitized description (original CSAW hostnames rewritten), only the files in the
   challenge's `files` list, and the target name. Challenge folders also hold `flag.txt`, server source and sometimes `solve.txt`;
-  none of that is exported (checked by `check_isolation.py`). A verified flag is withheld from the trace. Free text the model writes
-  could still repeat a flag, so check traces of solved runs before sharing them.
+  none of that is exported (checked by `check_isolation.py`). Once a flag is verified it is redacted from the whole trace (tool output and
+  model text included, found by the pilot, which printed the flag in a tool result). Traces written before that fix, such as
+  `runs/pilot/`, contain the flag in clear; do not share them.
 - **Improvement switch:** `"repeat_hint": true` appends a controller note after the same call has run 3 times. Off by default; enable it
   only as a hypothesis tied to a trace you have observed, in a separate config with its own `config_id` and output folder.
 
