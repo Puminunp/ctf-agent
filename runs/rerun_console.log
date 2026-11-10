@@ -1,0 +1,6 @@
+﻿agent-fix-rev-rap-t1: solved verified=True 140.125s tokens in/out=147079/11273
+agent-fix-rev-rap-t2: solved verified=True 229.313s tokens in/out=155998/14735
+agent-fix-for-1black0white-t1: solved verified=True 33.329s tokens in/out=20361/4197
+agent-fix-web-smug-dino-t1: solved verified=True 36.343s tokens in/out=20978/2141
+agent-fix-rev-maze-t2: solved verified=True 474.313s tokens in/out=350968/67367
+agent-fix-cry-hybrid2-t3: solved verified=True 42.843s tokens in/out=11657/1309

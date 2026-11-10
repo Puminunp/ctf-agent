@@ -1,0 +1,32 @@
+{
+  "run_id": "agent-fix-rev-maze-t2",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "88b26a1f6c0656c42db39db0f9c2c3c23cbcbb96",
+    "dirty": false
+  },
+  "started_unix": 1794287963.6956065,
+  "reset_s": 3.062,
+  "export_inventory": [
+    {
+      "file": "maze_public",
+      "sha256": "9164bc9c66bf90154ff4a2d16e3c4678b3016a20109819e100ebd8289a9a9f4c",
+      "bytes": 30240
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 28,
+  "llm_calls": 28,
+  "tool_calls": 28,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 28,
+      "verified": true,
+      "candidate_sha256_12": "1922b05061cb"
+    }
+  ]
+}
