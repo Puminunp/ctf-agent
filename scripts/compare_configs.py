@@ -88,6 +88,10 @@ def delta(a, b):
     return None if a is None or b is None else round(b - a, 1)
 
 
+def pp(x):
+    return "n/a" if x is None else f"{x:+} pp"
+
+
 def compare(ma: dict, mb: dict) -> dict:
     return {
         "success_rate_strict_pp": delta(ma["success_rate_pct_strict"], mb["success_rate_pct_strict"]),
@@ -110,10 +114,10 @@ def markdown(ids, a_name, ma, b_name=None, mb=None, cmp=None) -> str:
         L.append(f"| {label} | " + " | ".join(str(f(m)) for _, m in cols) + (f" | {ch if ch is not None else ''} |" if mb else " |"))
     row("Attempts / solved", lambda m: f"{m['attempts']} / {m['solved']}")
     row("Infrastructure errors", lambda m: m["infrastructure_errors"], cmp and f"{cmp['infrastructure_errors']:+d}")
-    row("Success rate, all attempts (pp)", lambda m: m["success_rate_pct_strict"], cmp and f"{cmp['success_rate_strict_pp']:+} pp")
-    row("Success rate, excluding infra errors", lambda m: m["success_rate_pct_excl_infra"], cmp and f"{cmp['success_rate_excl_infra_pp']:+} pp")
+    row("Success rate, all attempts (pp)", lambda m: m["success_rate_pct_strict"], cmp and pp(cmp['success_rate_strict_pp']))
+    row("Success rate, excluding infra errors", lambda m: m["success_rate_pct_excl_infra"], cmp and pp(cmp['success_rate_excl_infra_pp']))
     for k in ma["pass_at_k_pct_strict"]:
-        row(f"Pass@{k} (all attempts)", lambda m, k=k: m["pass_at_k_pct_strict"][k], cmp and f"{cmp['pass_at_k_strict_pp'][k]:+} pp")
+        row(f"Pass@{k} (all attempts)", lambda m, k=k: m["pass_at_k_pct_strict"][k], cmp and pp(cmp['pass_at_k_strict_pp'][k]))
     row("Solve rate by trial 1/2/3", lambda m: m["solve_rate_by_trial_pct_strict"])
     row("Mean solve rate / variance (pp^2)", lambda m: f"{m['mean_solve_rate_pct_strict']} / {m['solve_rate_variance_pp2_strict']}")
     row("Total wall-clock (s)", lambda m: m["total_elapsed_s"], cmp and f"{cmp['total_elapsed_s']:+}")

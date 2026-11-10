@@ -50,7 +50,8 @@ def check(results_path: Path, expect_config: str = "agent", expect_sample: str =
 
 
 if __name__ == "__main__":
+    # usage: check_results.py [results.jsonl] [config_id]   (config_id defaults to "agent")
     path = Path(sys.argv[1] if len(sys.argv) > 1 else "runs/eval/results.jsonl")
-    issues = check(path)
+    issues = check(path, expect_config=sys.argv[2] if len(sys.argv) > 2 else "agent")
     print("\n".join(issues) if issues else f"{path}: no problems found")
     sys.exit(1 if issues else 0)
