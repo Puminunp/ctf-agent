@@ -96,7 +96,7 @@ source and sometimes `solve.txt`; none of that is exported (checked). `msc-showd
 ## 7. What is left
 
 **Jack**
-1. Accept nothing more to do on access (already a collaborator). `git clone https://github.com/Puminunp/ctf-agent.git`.
+1. You are already a collaborator. Clone the repo: `git clone https://github.com/Puminunp/ctf-agent.git`.
 2. Check the numbers in the Results section against `runs/eval/summary.json`, `runs/fix/summary.json`, `runs/comparison.md`.
 3. Turn `REPORT_DRAFT.md` into the report: about 3 pages, insert the plots from `runs/plots/`, keep the results tables, the annotated failure, limits, configuration decision and disclosures.
 4. Verify the cited trace steps with `scripts/show_trace.py <trace> --no-output` (never open scored traces to hunt for answers).
