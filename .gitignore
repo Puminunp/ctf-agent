@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.key
+external/
+# scored results (runs/eval) ARE committed; scratch runs are not
+runs/pilot/
+runs/dev/
+runs/scratch/

@@ -1,0 +1,24 @@
+{
+  "config_id": "agent",
+  "model": "",
+  "temperature": 0.0,
+  "system_prompt_file": "prompts/system.md",
+  "repeat_hint": false,
+  "limits": {
+    "wall_clock_s": 900,
+    "max_steps": 60,
+    "max_total_tokens": 400000,
+    "max_wrong_flags": 5,
+    "max_idle_turns": 3,
+    "tool_timeout_s": 60,
+    "max_output_chars": 8000,
+    "llm_timeout_s": 120,
+    "llm_retries": 2
+  },
+  "environment": {
+    "compose_file": "course-compose.yaml",
+    "solver_service": "solver",
+    "target_host": "target",
+    "workdir": "/workspace"
+  }
+}
