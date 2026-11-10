@@ -17,6 +17,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("trace")
     ap.add_argument("--width", type=int, default=400)
+    ap.add_argument("--no-output", action="store_true",
+                    help="hide tool output (it may hold partial answers); show only exit code, size and timing")
     a = ap.parse_args()
     t0 = None
     for line in open(a.trace, encoding="utf-8"):
@@ -31,7 +33,10 @@ def main() -> None:
                 print(f"  calls {c['name']}: {clip(c['arguments'], a.width)}")
         elif t == "tool_result":
             print(f"  -> exit={e['exit_code']} {e['elapsed_s']}s truncated={e['truncated']}")
-            print("    " + clip(e["output"], a.width).replace("\n", "\n    "))
+            if a.no_output:
+                print(f"    [{len(e['output'])} chars of output hidden]")
+            else:
+                print("    " + clip(e["output"], a.width).replace("\n", "\n    "))
         elif t == "attempt_start":
             print(f"[{stamp}] START model={e['model']}\n  task: {clip(e['task_prompt'], a.width)}")
         elif t == "environment_ready":
