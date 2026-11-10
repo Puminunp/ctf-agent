@@ -17,7 +17,7 @@ Fill in the blanks marked `TODO` as Part 1 finishes. Part 2 reads this first.
 | Frozen agent commit | TODO (`git rev-parse HEAD`, working tree clean) |
 | NYU_CTF_Bench commit | TODO |
 | CTFTiny commit | `f1c9531672c45b24b7fb5f3aa44a7ac33d3602f8` (equals GitHub `main` on Nov 9; files came from the GitHub ZIP, see below) |
-| Model ID and route | TODO |
+| Model ID and route | `claude-haiku-5-5` via `https://litellm.oit.duke.edu/v1` (working default; passed `scripts/check_toolcall.py` on Nov 9: input 820+894, output 55+37 tokens). Not frozen until the scored run starts. |
 | Prompts | `prompts/system.md` (fingerprint recorded per run in `details/`) |
 | Limits | `configs/agent.json` |
 | Retry rules | gateway: 2 retries on 429/5xx/connection errors; no attempt-level retries |

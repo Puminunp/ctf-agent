@@ -1,6 +1,6 @@
 {
   "config_id": "agent",
-  "model": "",
+  "model": "claude-haiku-5-5",
   "temperature": 0.0,
   "system_prompt_file": "prompts/system.md",
   "repeat_hint": false,
