@@ -24,7 +24,9 @@ A4_FIELDS = ["run_id", "config_id", "challenge_id", "trial", "status", "verified
 def git_state(repo: Path) -> dict:
     def g(*a):
         return subprocess.run(["git", "-C", str(repo), *a], capture_output=True, text=True).stdout.strip()
-    return {"commit": g("rev-parse", "HEAD") or None, "dirty": bool(g("status", "--porcelain"))}
+    # untracked files (such as the run's own output folder) do not make the code "dirty"
+    return {"commit": g("rev-parse", "HEAD") or None,
+            "dirty": bool(g("status", "--porcelain", "--untracked-files=no"))}
 
 
 class Controller:
