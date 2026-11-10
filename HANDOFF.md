@@ -13,7 +13,13 @@ Fill in the `TODO` fields as Part 1 finishes. Part 2 reads this first.
   5,706 in / 926 out tokens, no blocked requests. Local only: `runs/pilot/` is git-ignored and its trace predates the flag-redaction
   fix, so it contains the flag; do not share it. The pilot also found a real bug: the flag showed up in a tool result, so redaction now
   covers the whole trace once a flag is verified (test added).
-- Implication: an easy challenge solved in one pass gives no failure to learn from. Pilot a harder one (`rev-beleaf` Moderate,
+- Pilot 2 (Nov 9): `rev-beleaf` (Moderate), solved in 10 steps, 49.7 s, 83,636 in / 8,648 out tokens, no blocked requests. The
+  redaction fix worked for the full flag, but partial fragments stay visible in earlier steps (see README). Behaviour worth citing:
+  steps 5-8 spent about 40% of the tokens fixing an off-by-one in its own objdump-text parsing (it read 31 table entries instead of 33
+  and decoded `...re_futurew`); it recovered by checking the length against the section bounds and verified the candidate by running
+  the binary ("Correct!") before submitting. Input tokens per call grew 1.4k -> 12.7k because every step re-sends the history.
+  Not a failure, so not yet a justified change.
+- Implication: two solves out of two give no failure to learn from. Pilot a harder one (`rev-beleaf` Moderate,
   `pwn-puffin` with a target) to find the trace problem worth fixing.
 - NOT done: more pilots, the trace-driven change, any scored attempts. `runs/eval/` does not exist yet.
 - Open question for the professor (not answered in his reply): whether the grading table's "controlled comparison" still applies.

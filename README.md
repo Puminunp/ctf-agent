@@ -102,8 +102,10 @@ controller (trusted, holds the flag)          solver container (unprivileged)
 - **Tokens:** summed from gateway usage; `null` if none reported. `cost_usd` is `null` (no price data).
 - **Answer separation:** the solver gets a sanitized description (original CSAW hostnames rewritten), only the files in the
   challenge's `files` list, and the target name. Challenge folders also hold `flag.txt`, server source and sometimes `solve.txt`;
-  none of that is exported (checked by `check_isolation.py`). Once a flag is verified it is redacted from the whole trace (tool output and
-  model text included, found by the pilot, which printed the flag in a tool result). Traces written before that fix, such as
+  none of that is exported (checked by `check_isolation.py`). Once a flag is verified the full flag string is redacted from the whole trace (tool output and
+  model text included, found by the pilot, which printed the flag in a tool result). Partial fragments of it that the agent
+  printed along the way are NOT redacted (the `rev-beleaf` pilot trace shows most of the flag in earlier steps), so treat traces of
+  solved runs as containing partial answers: keep them private and do not paste them into chats or slides. Traces written before that fix, such as
   `runs/pilot/`, contain the flag in clear; do not share them.
 - **Improvement switch:** `"repeat_hint": true` appends a controller note after the same call has run 3 times. Off by default; enable it
   only as a hypothesis tied to a trace you have observed, in a separate config with its own `config_id` and output folder.
