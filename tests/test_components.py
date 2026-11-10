@@ -57,6 +57,17 @@ class Description(unittest.TestCase):
         self.assertEqual(out, "Connect to target 8000 or target:8000")
 
 
+class TaskBuilding(unittest.TestCase):
+    def test_original_box_name_never_reaches_solver(self):
+        from types import SimpleNamespace
+        from ctfagent.challenges import build_task
+        chal = SimpleNamespace(name="n", category="pwn", files=[], server_name="puffin-box", port=1337,
+                               description="Connect to puffin-box 1337.")
+        t = build_task("pwn-x", chal, "target")
+        self.assertNotIn("puffin-box", t.description)
+        self.assertEqual((t.target_host, t.target_port, t.allowed_hosts), ("target", 1337, {"target"}))
+
+
 class Gateway(unittest.TestCase):
     def test_parse_response_and_missing_usage(self):
         payload = {"choices": [{"message": {"content": None, "tool_calls": [

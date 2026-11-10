@@ -49,9 +49,10 @@ def main() -> None:
     cfg = load_config(args.config)
     if not cfg.model:
         sys.exit("configs: 'model' is empty. Set an allowed Duke gateway model ID (see list_gateway_models.py).")
-    token, base_url = os.environ.get("LITELLM_TOKEN"), os.environ.get("LITELLM_BASE_URL")
-    if not token or not base_url:
-        sys.exit("set LITELLM_TOKEN and LITELLM_BASE_URL in the controller environment (see README)")
+    token = os.environ.get("LITELLM_TOKEN")
+    base_url = os.environ.get("LITELLM_BASE_URL", "https://litellm.oit.duke.edu/v1")
+    if not token:
+        sys.exit("set LITELLM_TOKEN in the controller environment (see README)")
 
     system_prompt = (ROOT / cfg.system_prompt_file).read_text(encoding="utf-8")
     llm = GatewayClient(base_url, token, cfg.model, cfg.temperature,

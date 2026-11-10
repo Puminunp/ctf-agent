@@ -12,8 +12,8 @@ set it to an allowed Duke gateway model ID before launching (see step 3).
 |---|---|
 | Agent loop, limits, tool validation, scope tripwire, trace redaction, results records, gateway client | Offline unit tests pass (`python -m unittest discover -s tests`, 31 tests). No live model or target was used. |
 | `ComposeEnvironment` (reset, export, solver exec) | **Written from the guide, never run.** It must be adapted to the instructor's `course-compose.yaml`. |
-| `challenges.py` (reads nyuctf objects) | **Not run against the real package.** Attribute names are assumptions; confirm them (see "Adaptation points"). |
-| Gateway base URL, model ID, quota | **Unknown.** Take them from the Duke AI Gateway guide. |
+| `challenges.py` (reads nyuctf objects) | **Not run against the real package.** Attribute names were checked against the upstream source, not the installed wheel. |
+| Gateway base URL | `https://litellm.oit.duke.edu/v1`, from Duke's developer guide. Not called yet. Model ID and quota still unknown. |
 | Result status `solved` | My choice for a verified solve. Check it against the instructor's `ctf_single_agent_summary.py`. |
 
 ## Setup from a clean clone (Windows, PowerShell)
@@ -41,13 +41,17 @@ docker compose -f course-compose.yaml config --networks
 
 Keep both values in the controller's environment only. Never put them in the repo, the solver, or a trace.
 
+Create the key at https://dashboard.ai.duke.edu/ (log in, open the **AI Gateway** tab, **Create Api Key**, leave the fund
+code blank for the daily limits). Then:
+
 ```powershell
-$env:LITELLM_TOKEN    = "<your Duke AI Dashboard key>"
-$env:LITELLM_BASE_URL = "<gateway base URL from the Duke AI Gateway guide, ending in /v1>"
+$env:LITELLM_TOKEN = "<your key>"
+# optional: the base URL defaults to https://litellm.oit.duke.edu/v1 (from Duke's AI Gateway developer guide)
 ```
 
-Run the instructor's `list_gateway_models.py`, pick an allowed model, and set it as `"model"` in `configs/agent.json`.
-A listed model is not proof it supports tool calls; the first pilot attempt is that check.
+Run `scripts/list_models.py` (or the instructor's `list_gateway_models.py`), pick an allowed model, and set it as
+`"model"` in `configs/agent.json`. IDs can contain spaces, for example `GPT 4.1`; copy them exactly. The Duke guide shows
+no tool-calling example, and a listed model is not proof it supports tool calls, so the first pilot attempt is that check.
 
 ### Evaluation manifest
 
@@ -117,8 +121,8 @@ evidence in the report. This repo does not claim those controls.
 
 ## Adaptation points (do these before the first live run)
 
-1. `ctfagent/challenges.py`: confirm `chal.description`, `chal.server_name`, `chal.port`, `chal.files` and the challenge directory
-   attribute against the installed `nyuctf` 1.1.1.
+1. `ctfagent/challenges.py`: attribute names match NYU_CTF_Bench `challenge.py` on `main`; confirm them against the pinned
+   `nyuctf` 1.1.1 wheel, and confirm contestant files sit directly in the challenge directory (the loader does not resolve them).
 2. `ctfagent/environment.py`: align service names, how a challenge is selected (it passes `CHALLENGE_ID` to compose), and the
    workspace path with `course-compose.yaml`.
 3. `scripts/run_attempts.py::manifest_ids`: match the real `evaluation_manifest.json` shape.

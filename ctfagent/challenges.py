@@ -1,8 +1,9 @@
 """Controller-side challenge loading. CTFChallenge objects expose the flag, so they never leave the controller.
 
-ADAPTATION POINT: attribute names below follow the nyuctf 1.1.1 loader as described in the course
-guide (name, category, files, flag) plus the fields I expect it to have (description, server_name, port,
-challenge_dir). Confirm them against the installed package on your machine before the first run.
+Attribute names were checked against NYU_CTF_Bench python/nyuctf/challenge.py (main branch): `challenge_dir`,
+`files` (names relative to the challenge dir), `flag`, `name`, `category`, `server_name` (= challenge["box"]),
+`port` (= challenge["internal_port"]) and a `description` property that fills {box} and {port}.
+Still confirm against the pinned nyuctf==1.1.1 wheel on your machine before the first run.
 """
 
 from __future__ import annotations
@@ -47,6 +48,8 @@ def build_task(challenge_id: str, chal, target_host: str) -> Task:
     port = getattr(chal, "port", None)
     has_service = bool(server or port)
     desc = sanitize_description(str(getattr(chal, "description", "") or ""), target_host, port)
+    if server:  # nyuctf fills {box} with the original server name; never let it reach the solver
+        desc = desc.replace(str(server), target_host)
     return Task(
         challenge_id=challenge_id, name=str(chal.name), category=str(chal.category),
         description=desc, files=[str(f) for f in (getattr(chal, "files", None) or [])],
