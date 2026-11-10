@@ -23,10 +23,13 @@ class Limits:
 
 @dataclass(frozen=True)
 class EnvironmentConfig:
-    compose_file: str = "course-compose.yaml"  # the instructor's released file
-    solver_service: str = "solver"
-    target_host: str = "target"                # name the solver uses to reach the target
+    solver_image: str = "ctf-solver:latest"    # built from docker/solver/Dockerfile
+    target_host: str = "target"                # service name the solver uses to reach the target
     workdir: str = "/workspace"
+    memory: str = "2g"
+    cpus: float = 1.0
+    pids_limit: int = 512
+    project_prefix: str = "ctf"
 
 
 @dataclass(frozen=True)

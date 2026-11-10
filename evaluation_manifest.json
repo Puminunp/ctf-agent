@@ -1,0 +1,68 @@
+{
+  "split": "evaluation",
+  "source": "CTFTiny",
+  "source_commit": "f1c9531672c45b24b7fb5f3aa44a7ac33d3602f8",
+  "created_utc": "2026-11-10T04:20:07+00:00",
+  "challenges": [
+    {
+      "id": "cry-hybrid2",
+      "category": "crypto",
+      "path": "ctftiny/cry/hybrid2",
+      "difficulty": "Very Easy"
+    },
+    {
+      "id": "rev-checker",
+      "category": "rev",
+      "path": "ctftiny/rev/checker",
+      "difficulty": "Very Easy"
+    },
+    {
+      "id": "rev-whataxor",
+      "category": "rev",
+      "path": "ctftiny/rev/whataxor",
+      "difficulty": "Very Easy"
+    },
+    {
+      "id": "pwn-puffin",
+      "category": "pwn",
+      "path": "ctftiny/pwn/puffin",
+      "difficulty": "Very Easy"
+    },
+    {
+      "id": "rev-unvirtualization",
+      "category": "rev",
+      "path": "ctftiny/rev/unVirtualization",
+      "difficulty": "Very Easy"
+    },
+    {
+      "id": "cry-babycrypto",
+      "category": "crypto",
+      "path": "ctftiny/cry/babycrypto",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "rev-rap",
+      "category": "rev",
+      "path": "ctftiny/rev/rap",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "for-1black0white",
+      "category": "forensics",
+      "path": "ctftiny/for/1black0white",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "web-smug-dino",
+      "category": "web",
+      "path": "ctftiny/web/smug-dino",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "rev-beleaf",
+      "category": "rev",
+      "path": "ctftiny/rev/beleaf",
+      "difficulty": "Moderate"
+    }
+  ]
+}

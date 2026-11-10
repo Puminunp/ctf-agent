@@ -1,141 +1,128 @@
 # CTF agent (final project, part 1)
 
 A tool-using CTF solver plus a trusted controller. One fixed configuration (`config_id = agent`) is run
-3 times per challenge, and every attempt is written to `results.jsonl` in the course's A4 schema with a JSONL trace.
+3 times per challenge. Every attempt is written to `results.jsonl` in the course's A4 schema with a JSONL trace.
 
-**Selected configuration:** `configs/agent.json` + `prompts/system.md`. The `model` field is empty on purpose:
-set it to an allowed Duke gateway model ID before launching (see step 3).
+**Selected configuration:** `configs/agent.json` + `prompts/system.md` (model `claude-haiku-5-5` via the Duke AI Gateway;
+not frozen until the scored run starts).
+
+> The professor confirmed on Nov 9 that the guide's "kit" (`course-compose.yaml`, private verifier, helper scripts, shared
+> Linux machine) was an artifact of writing the guide, and that implementation follows the NYU repos. So the isolated
+> environment, manifest builder, flag verifier and summary script here are our own.
 
 ## What is verified and what is not
 
 | Part | State |
 |---|---|
-| Agent loop, limits, tool validation, scope tripwire, trace redaction, results records, gateway client | Offline unit tests pass (`python -m unittest discover -s tests`, 31 tests). No live model or target was used. |
-| `ComposeEnvironment` (reset, export, solver exec) | **Written from the guide, never run.** It must be adapted to the instructor's `course-compose.yaml`. |
-| `challenges.py` (reads nyuctf objects) | **Not run against the real package.** Attribute names were checked against the upstream source, not the installed wheel. |
-| Gateway base URL | `https://litellm.oit.duke.edu/v1`, from Duke's developer guide. Not called yet. Model ID and quota still unknown. |
-| Result status `solved` | My choice for a verified solve. Check it against the instructor's `ctf_single_agent_summary.py`. |
+| Agent loop, limits, tool validation, scope tripwire, trace redaction, results records, gateway client, manifest and summary scripts | 47 offline unit tests pass (`python -m unittest discover -s tests`). |
+| Gateway + tool calling | `scripts/check_toolcall.py` passed for `claude-haiku-5-5` (Nov 9). |
+| Isolated environment (generated compose, solver image) | `scripts/check_isolation.py` passed all controls on `rev-checker` (no target) and `pwn-puffin` (with target). Evidence in `runs/controls/`. |
+| nyuctf loader | Run against `pwn-puffin`; fields match the code. |
+| A full agent attempt (model + container + verifier end to end) | **Not run yet.** |
+| Flag verification | `HashVerifier` compares against `chal.flag` inside the controller. No external verifier exists. |
+| Result status `solved` | Our name for a verified solve; `scripts/summarize.py` and `scripts/check_results.py` use it. |
 
-## Setup from a clean clone (Windows, PowerShell)
-
-```powershell
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m unittest discover -s tests        # offline, no model, no Docker
-docker version                                                # server section must respond
-git clone https://github.com/NYU-LLM-CTF/NYU_CTF_Bench.git external/NYU_CTF_Bench
-git clone https://github.com/NYU-LLM-CTF/CTFTiny.git external/CTFTiny
-git -C external/NYU_CTF_Bench rev-parse HEAD                  # record both commits in HANDOFF.md
-git -C external/CTFTiny rev-parse HEAD
-```
-
-**Windows note:** a plain `git clone` of both datasets fails on Windows, because each has a challenge folder named
-`get_it?` (a `?` is not allowed in Windows file names) and Git aborts the checkout, leaving an empty working tree. On Windows,
-download the GitHub ZIP of CTFTiny and extract it with `tar -xf` into its own folder (it skips the bad name), then pass
-`--dataset external/ctftiny_files/CTFTiny-main/ctftiny.json`. Prefer Linux or WSL2 for the real runs: NYU_CTF_Bench has
-the same problem and is too large for the ZIP route, and Windows line endings can break scripts inside Docker images.
-
-Put the instructor's `course-compose.yaml` in the repo root (or change `environment.compose_file`), and inspect it
-before starting anything:
+## Setup (Windows, PowerShell, from this folder)
 
 ```powershell
-docker compose -f course-compose.yaml config --services
-docker compose -f course-compose.yaml config --networks
+uv venv --python 3.12 .venv
+uv pip install -r requirements.txt --python .venv\Scripts\python.exe
+.venv\Scripts\python.exe -m unittest discover -s tests            # offline: no model, no Docker
+docker version                                                    # Server section must respond
+docker build -t ctf-solver:latest docker/solver                   # solver sandbox image (~1.2 GB)
 ```
+
+(`python -m venv .venv` works instead of `uv` where Python is installed normally.)
+
+### Data (Windows needs the ZIP route)
+
+A plain `git clone` of CTFTiny or NYU_CTF_Bench fails on Windows: each has a challenge folder named `get_it?`, and `?` is not
+allowed in Windows file names, so Git aborts the checkout and leaves an empty working tree. For CTFTiny, download
+`https://github.com/NYU-LLM-CTF/CTFTiny/archive/refs/heads/main.zip` and extract it with `tar -xf` into its own folder under
+`external/ctftiny_files/` (it skips the bad name). Used commit: `f1c9531672c45b24b7fb5f3aa44a7ac33d3602f8` (GitHub `main`, Nov 9).
+NYU_CTF_Bench (development split) is too large for this route; use Linux/WSL2 for it.
 
 ### Model access
 
-Keep both values in the controller's environment only. Never put them in the repo, the solver, or a trace.
-
-Create the key at https://dashboard.ai.duke.edu/ (log in, open the **AI Gateway** tab, **Create Api Key**, leave the fund
-code blank for the daily limits). Then:
+Create a key at https://dashboard.ai.duke.edu/ (AI Gateway tab, Create Api Key, fund code blank). Keep it in the
+controller's environment only; never in the repo, the solver, a trace or a video.
 
 ```powershell
-$env:LITELLM_TOKEN = "<your key>"
-# optional: the base URL defaults to https://litellm.oit.duke.edu/v1 (from Duke's AI Gateway developer guide)
+$env:LITELLM_TOKEN = "<your key>"      # base URL defaults to https://litellm.oit.duke.edu/v1
+.venv\Scripts\python.exe scripts/list_models.py
+.venv\Scripts\python.exe scripts/check_toolcall.py --model claude-haiku-5-5
 ```
 
-Run `scripts/list_models.py` (or the instructor's `list_gateway_models.py`), pick an allowed model, and set it as
-`"model"` in `configs/agent.json`. IDs can contain spaces, for example `GPT 4.1`; copy them exactly. The Duke guide shows
-no tool-calling example, and a listed model is not proof it supports tool calls, so the first pilot attempt is that check.
+Model IDs can contain spaces (for example `GPT 4.1`); copy them exactly into `configs/agent.json`.
 
-### Evaluation manifest
-
-Choose the 10 scored CTFTiny IDs, list them in `evaluation_ids.txt` (one per line), and build the manifest with the instructor's script:
+## Run
 
 ```powershell
-.venv\Scripts\python.exe make_manifest.py --dataset external/CTFTiny/ctftiny.json --ids-file evaluation_ids.txt `
-  --split evaluation --source-commit (git -C external/CTFTiny rev-parse HEAD) --out evaluation_manifest.json
-```
+# 1. manifest of the 10 scored CTFTiny challenges (reads the index and README labels only, never challenge.json)
+.venv\Scripts\python.exe scripts/make_manifest.py --dataset external/ctftiny_files/CTFTiny-main/ctftiny.json `
+  --ids-file evaluation_ids.txt --split evaluation --source-commit f1c9531672c45b24b7fb5f3aa44a7ac33d3602f8 --out evaluation_manifest.json
 
-## Launch
+# 2. controls evidence (run once with a target and once without; keep runs/controls/)
+.venv\Scripts\python.exe scripts/check_isolation.py --dataset external/ctftiny_files/CTFTiny-main/ctftiny.json --challenge pwn-puffin --out runs/controls
 
-Pilot first. Keep it out of the scored results by using a different `--out`. For development challenges use
-`external/NYU_CTF_Bench/development_dataset.json` and a pilot manifest.
+# 3. pilot: one attempt, kept out of the scored results
+.venv\Scripts\python.exe scripts/run_attempts.py --manifest evaluation_manifest.json --dataset external/ctftiny_files/CTFTiny-main/ctftiny.json `
+  --only rev-checker --trials 1 --max-attempts 1 --out runs/pilot
 
-```powershell
-.venv\Scripts\python.exe scripts/run_attempts.py --manifest pilot_manifest.json `
-  --dataset external/NYU_CTF_Bench/development_dataset.json --out runs/pilot --trials 1 --max-attempts 2
-```
+# 4. scored run: 3 trials for each challenge (30 attempts). Existing slots are skipped, never overwritten or silently retried.
+.venv\Scripts\python.exe scripts/run_attempts.py --manifest evaluation_manifest.json --dataset external/ctftiny_files/CTFTiny-main/ctftiny.json `
+  --config configs/agent.json --out runs/eval --trials 3
 
-Scored run (3 trials for each challenge in the manifest, 30 attempts for 10 challenges). Existing slots are skipped:
-
-```powershell
-.venv\Scripts\python.exe scripts/run_attempts.py --manifest evaluation_manifest.json `
-  --dataset external/CTFTiny/ctftiny.json --config configs/agent.json --out runs/eval --trials 3
+# 5. check and summarize
 .venv\Scripts\python.exe scripts/check_results.py runs/eval/results.jsonl
-.venv\Scripts\python.exe ctf_single_agent_summary.py --manifest evaluation_manifest.json `
-  --results runs/eval/results.jsonl --config agent --out runs/eval/summary.json --csv runs/eval/per_challenge.csv
+.venv\Scripts\python.exe scripts/summarize.py --manifest evaluation_manifest.json --results runs/eval/results.jsonl `
+  --config agent --out runs/eval/summary.json --csv runs/eval/per_challenge.csv
 ```
 
-Output layout: `results.jsonl` (A4 fields only), `traces/<run_id>.jsonl`, `details/<run_id>.json` (config fingerprint,
-git commit, model, reset time, file hash inventory, stop reason, step and call counts).
+Output layout: `results.jsonl` (A4 fields only), `traces/<run_id>.jsonl`, `details/<run_id>.json` (config fingerprint, git commit,
+model, reset time, file hash inventory, stop reason, step and call counts), `compose/` (the generated compose file per challenge).
 
 ## How it works
 
 ```
-controller (trusted)                         solver sandbox (container)
-  reset target + solver  ───────────────────►  fresh workspace
-  export contestant files + sha256 inventory ►  /workspace
-  loop: model ─► tool call ─► validate ─► run_shell / read_file via docker exec
-        submit_flag ─► verifier in controller ─► "correct" | "incorrect"
-  write trace, result record; tear everything down
+controller (trusted, holds the flag)          solver container (unprivileged)
+  generate compose, reset target + solver ───►  fresh /workspace
+  tar the contestant files into /workspace  ──►  only the files listed in challenge.json
+  loop: model -> tool call -> validate -> run_shell / read_file (docker exec)
+        submit_flag -> HashVerifier in controller -> "correct" | "incorrect"
+  write trace + result record; tear everything down (docker compose down -v)
 ```
 
-- **Tools** (`ctfagent/tools.py`): `run_shell(command, timeout_s)`, `read_file(path, max_bytes)`, `submit_flag(flag)`.
-  Inputs are validated, errors are returned to the model as text, output is capped and truncation is logged.
-- **Limits, enforced in code** (`ctfagent/agent.py`, values in `configs/agent.json`): wall-clock per attempt, model steps,
-  total tokens, wrong submissions, consecutive no-tool turns, per-tool timeout (also capped by remaining wall-clock). The
-  model cannot change any of them.
+- **Tools** (`ctfagent/tools.py`): `run_shell(command, timeout_s)`, `read_file(path, max_bytes)`, `submit_flag(flag)`. Inputs are
+  validated, errors go back to the model as text, output is capped and truncation is logged.
+- **Limits, enforced in code** (`ctfagent/agent.py`, values in `configs/agent.json`): wall-clock per attempt, model steps, total
+  tokens, wrong submissions, consecutive no-tool turns, per-tool timeout (also capped by the remaining wall-clock). The model cannot change them.
 - **Statuses:** `solved`, `no_flag`, `wrong_flag`, `timeout`, `budget_exhausted`, `infrastructure_error`, `scope_violation`.
   `elapsed_s` is the attempt loop time; reset time is in `details/`.
-- **Tokens:** summed from gateway usage; `null` if the gateway reported none; `usage_complete` in `details/` says whether any
-  call was missing usage. `cost_usd` is `null` (no price data supplied).
-- **Answer separation:** the flag lives only in the controller's `HashVerifier`. The solver receives a sanitized description
-  (original CSAW hostnames rewritten to the target name), the contestant files and the target name. A verified flag is
-  withheld from the trace. Free text the model writes could still repeat a flag, so check traces of solved runs before sharing.
-- **Switch for the improvement test:** `"repeat_hint": true` makes the controller append a note after the same call runs
-  3 times. It is off by default; turn it on only as a hypothesis tied to a trace you have observed.
+- **Tokens:** summed from gateway usage; `null` if none reported. `cost_usd` is `null` (no price data).
+- **Answer separation:** the solver gets a sanitized description (original CSAW hostnames rewritten), only the files in the
+  challenge's `files` list, and the target name. Challenge folders also hold `flag.txt`, server source and sometimes `solve.txt`;
+  none of that is exported (checked by `check_isolation.py`). A verified flag is withheld from the trace. Free text the model writes
+  could still repeat a flag, so check traces of solved runs before sharing them.
+- **Improvement switch:** `"repeat_hint": true` appends a controller note after the same call has run 3 times. Off by default; enable it
+  only as a hypothesis tied to a trace you have observed, in a separate config with its own `config_id` and output folder.
 
-### Controls
+### Controls (what the generated compose does)
 
-The code enforces limits, tool validation, secret redaction and a command-level scope tripwire (`ctfagent/scope.py`: foreign
-URLs and IPs in `curl/wget/nc/ssh/...` commands, `remote("host")`). A hit stops the attempt as `scope_violation` and keeps the
-trace. **The tripwire is not isolation.** Network isolation, no Docker socket, no sudo and no published ports must come from
-the instructor's compose configuration; check it as the guide says (host access, routes, mounts, capabilities). Record the
-evidence in the report. This repo does not claim those controls.
+| Control | How |
+|---|---|
+| No internet, no host access | solver sits on an `internal: true` network (or `network_mode: none` when the challenge has no target). Checked from inside: `https`, raw IP and `host.docker.internal` all fail. |
+| No Docker socket, no sudo, no privileges | not mounted; no `sudo` binary; solver runs as uid 1000 with `cap_drop: ALL` and `no-new-privileges`. |
+| No published ports | the generated file has no `ports:`. The upstream challenge compose files publish ports and mount `/var/run/docker.sock`, so they are read only for the image name and never run. |
+| Resource limits | 2 GB memory, 1 CPU, 512 pids per container. |
+| Reset between attempts | `docker compose down -v` before and after each attempt; workspace is not a bind mount. |
+| Command tripwire | `ctfagent/scope.py` stops an attempt as `scope_violation` if a command names a foreign URL or IP. This is a tripwire, not the control. |
 
-## Adaptation points (do these before the first live run)
-
-1. `ctfagent/challenges.py`: attribute names match NYU_CTF_Bench `challenge.py` on `main`; confirm them against the pinned
-   `nyuctf` 1.1.1 wheel, and confirm contestant files sit directly in the challenge directory (the loader does not resolve them).
-2. `ctfagent/environment.py`: align service names, how a challenge is selected (it passes `CHALLENGE_ID` to compose), and the
-   workspace path with `course-compose.yaml`.
-3. `scripts/run_attempts.py::manifest_ids`: match the real `evaluation_manifest.json` shape.
-4. If the instructor supplies a private verifier, implement `Verifier.verify` with it and pass it in place of `HashVerifier`.
+Unsupported: challenges whose compose file has `build:` and no `image:`. Challenges that need a privileged target or the Docker
+socket (for example `msc-showdown`) were left out of the scored set for that reason.
 
 ## Reuse and AI assistance
 
-The NYU CTF Bench / CTFTiny datasets and the `nyuctf` loader are used as data sources. The control flow follows the
-illustrative loop in the course's Implementation Guide (A4). This code base was written with the assistance of Claude
-(Anthropic's Claude Code). Add each team member's contribution here before submitting.
+The NYU CTF Bench / CTFTiny data and the `nyuctf` loader are used as data sources. The control flow follows the illustrative
+loop in the course's Implementation Guide (A4). This code base was written with the assistance of Claude (Anthropic's Claude
+Code). Add each team member's contribution here before submitting.

@@ -1,13 +1,18 @@
 # HANDOFF (Part 1 to Part 2)
 
-Fill in the blanks marked `TODO` as Part 1 finishes. Part 2 reads this first.
+Fill in the `TODO` fields as Part 1 finishes. Part 2 reads this first.
 
-## State of the repo
+## State of the repo (Nov 9)
 
-- Agent loop, tools, limits, trace and result writers, gateway client, controller: **done, 31 offline tests pass.**
-- NOT done and NOT run: anything against a live model, a live target, the instructor's compose file, or the real `nyuctf` package.
-  See "Adaptation points" in README.md.
-- No scored attempts exist yet. `runs/eval/` is empty.
+- Done and tested: agent loop, tools, limits, trace and result writers, gateway client, controller, generated isolated compose
+  environment, solver image, manifest builder, summary script, isolation check. 47 offline tests pass.
+- The professor confirmed there is NO instructor kit (compose file, private verifier, helper scripts, shared Linux machine).
+  Those were artifacts of writing the guide. Everything above is ours; the README says so.
+- Controls evidence exists for `rev-checker` and `pwn-puffin`: `runs/controls/isolation_*.json` (all checks passed).
+- NOT done: a full agent attempt, a pilot, any scored attempts. `runs/eval/` does not exist yet.
+- Open question for the professor (not answered in his reply): whether the grading table's "controlled comparison" still applies.
+  Plan that covers both readings: scored baseline = 3 trials x 10 challenges with `config_id = agent`; then re-test one trace-driven fix
+  on 2-3 challenges as a separate config (`agent-fix`) in `runs/followup/`, reported separately.
 
 ## Fixed configuration
 
@@ -15,23 +20,24 @@ Fill in the blanks marked `TODO` as Part 1 finishes. Part 2 reads this first.
 |---|---|
 | config_id | `agent` |
 | Frozen agent commit | TODO (`git rev-parse HEAD`, working tree clean) |
-| NYU_CTF_Bench commit | TODO |
-| CTFTiny commit | `f1c9531672c45b24b7fb5f3aa44a7ac33d3602f8` (equals GitHub `main` on Nov 9; files came from the GitHub ZIP, see below) |
-| Model ID and route | `claude-haiku-5-5` via `https://litellm.oit.duke.edu/v1` (working default; passed `scripts/check_toolcall.py` on Nov 9: input 820+894, output 55+37 tokens). Not frozen until the scored run starts. |
+| CTFTiny commit | `f1c9531672c45b24b7fb5f3aa44a7ac33d3602f8` (GitHub `main` on Nov 9; files from the GitHub ZIP) |
+| NYU_CTF_Bench commit | not used (cannot be cloned on Windows; development checks use unscored CTFTiny challenges) |
+| Model ID and route | `claude-haiku-5-5` via `https://litellm.oit.duke.edu/v1`. Passed `scripts/check_toolcall.py`. Not frozen until the scored run starts. |
 | Prompts | `prompts/system.md` (fingerprint recorded per run in `details/`) |
-| Limits | `configs/agent.json` |
+| Limits | `configs/agent.json` (900 s, 60 steps, 400k tokens, 5 wrong flags per attempt) |
 | Retry rules | gateway: 2 retries on 429/5xx/connection errors; no attempt-level retries |
-| Launch command | see README "Launch" |
-| Scored challenges | `evaluation_ids.txt` holds a SUGGESTED 10 (5 Very Easy, 4 Easy, 1 Moderate; 7 need no service). Chosen from the CTFTiny README difficulty labels only; no flags or solutions were read. Edit it if the team prefers other IDs. `evaluation_manifest.json` is still TODO. |
+| Solver image | `ctf-solver:latest`, built from `docker/solver/Dockerfile` |
+| Launch command | README "Run", step 4 |
+| Scored challenges | `evaluation_ids.txt` -> `evaluation_manifest.json` (10 challenges, 5 Very Easy, 4 Easy, 1 Moderate; 8 need no target). Chosen from README difficulty labels only; no flags or solutions read. `msc-showdown` was replaced by `rev-unvirtualization` because its target needs `privileged: true` and the Docker socket. |
 
 ## Run status
 
 | Item | Value |
 |---|---|
-| Attempts finished / running / queued (of 3 x N) | TODO |
+| Attempts finished / running / queued (of 30) | TODO |
 | Where results are | `runs/eval/results.jsonl`, `runs/eval/traces/`, `runs/eval/details/` |
 | Incidents (blocked requests, scope_violation, infrastructure_error, loops) | TODO |
-| Tokens and quota used so far | TODO |
+| Tokens and quota used so far | TODO (check the Duke AI dashboard; daily limit unknown) |
 
 ## Trace-driven change
 
@@ -39,17 +45,18 @@ Fill in the blanks marked `TODO` as Part 1 finishes. Part 2 reads this first.
 |---|---|
 | Problem observed (run_id, step numbers) | TODO |
 | Change made (prompt / tool description / validation / planning / memory) | TODO |
-| Follow-up check on development challenges and result | TODO |
-| Status | TODO: tested, or proposed only. Do not call an untested change "measured". |
+| Follow-up check and result | TODO. Say "proposed" if untested; do not call an untested change "measured". |
 
 ## Environment controls evidence (for the report)
 
 | Check | Result |
 |---|---|
-| `docker compose config --networks` reviewed | TODO |
-| Host and internet unreachable from solver (blocked request logged) | TODO |
-| No Docker socket, no sudo, no published ports | TODO |
-| Reset clears workspace, volumes and conversation between trials | TODO |
+| Non-root, no sudo, no capabilities, no Docker socket | Passed (`runs/controls/isolation_rev-checker.json`, `isolation_pwn-puffin.json`) |
+| Internet, raw IP and host blocked from the solver | Passed (same files) |
+| Answer files absent; workspace holds only the listed files | Passed (same files) |
+| Target reachable only as `target:<port>` | Passed for `pwn-puffin` |
+| Reset between trials clears workspace, volumes and conversation | Design: `down -v` before and after, no bind mounts. TODO: confirm on two consecutive attempts |
+| Blocked attempts by the agent during real runs | TODO (read traces for `scope_violation` events) |
 
 ## Contribution notes and AI assistance
 

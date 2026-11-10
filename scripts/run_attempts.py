@@ -58,7 +58,8 @@ def main() -> None:
     llm = GatewayClient(base_url, token, cfg.model, cfg.temperature,
                         cfg.limits.llm_timeout_s, cfg.limits.llm_retries)
     ds = Dataset(args.dataset)
-    ctl = Controller(cfg, system_prompt, llm, ComposeEnvironment(cfg.environment), args.out, ds.load,
+    ctl = Controller(cfg, system_prompt, llm,
+                     ComposeEnvironment(cfg.environment, work_dir=Path(args.out) / "compose"), args.out, ds.load,
                      repo_dir=ROOT, sample_type=args.sample_type, secrets=[token])
 
     ids = args.only or manifest_ids(args.manifest)

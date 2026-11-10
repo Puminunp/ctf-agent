@@ -59,7 +59,7 @@ class Controller:
             chal = self.loader(challenge_id)
             verifier = HashVerifier(chal.flag)
             task: Task = build_task(challenge_id, chal, self.cfg.environment.target_host)
-            reset_id = self.env.reset(challenge_id)
+            reset_id = self.env.reset(challenge_id, chal)
             inventory = self.env.export(host_file_paths(chal), self.cfg.environment.workdir)
             detail["reset_s"] = round(time.monotonic() - t0, 3)
             detail["export_inventory"] = inventory

@@ -46,7 +46,9 @@ class Dataset:
 def build_task(challenge_id: str, chal, target_host: str) -> Task:
     server = getattr(chal, "server_name", None)
     port = getattr(chal, "port", None)
-    has_service = bool(server or port)
+    # `box` can be set for challenges whose live CSAW server no longer exists. A local target exists
+    # only when the challenge ships a container (challenge.json "compose": true).
+    has_service = bool(getattr(chal, "container", None) if hasattr(chal, "container") else (server or port))
     desc = sanitize_description(str(getattr(chal, "description", "") or ""), target_host, port)
     if server:  # nyuctf fills {box} with the original server name; never let it reach the solver
         desc = desc.replace(str(server), target_host)

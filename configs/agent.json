@@ -16,9 +16,12 @@
     "llm_retries": 2
   },
   "environment": {
-    "compose_file": "course-compose.yaml",
-    "solver_service": "solver",
+    "solver_image": "ctf-solver:latest",
     "target_host": "target",
-    "workdir": "/workspace"
+    "workdir": "/workspace",
+    "memory": "2g",
+    "cpus": 1.0,
+    "pids_limit": 512,
+    "project_prefix": "ctf"
   }
 }
