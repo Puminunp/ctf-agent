@@ -1,0 +1,37 @@
+{
+  "run_id": "agent-fix-rev-tablez-t1",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "b7be43c58cbd4ad3d59550385a4b281fd4090e2b",
+    "dirty": false
+  },
+  "started_unix": 1794435271.680791,
+  "reset_s": 1.844,
+  "export_inventory": [
+    {
+      "file": "tablez",
+      "sha256": "e8f5e0175ea29e28dbde04613ebd9d7b54b75ea47c2a57c15af0c9bae71b53a6",
+      "bytes": 9736
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 11,
+  "llm_calls": 11,
+  "tool_calls": 11,
+  "wrong_flags": 1,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 6,
+      "verified": false,
+      "candidate_sha256_12": "0de74e0273e8"
+    },
+    {
+      "step": 11,
+      "verified": true,
+      "candidate_sha256_12": "2fbda70805e6"
+    }
+  ]
+}
