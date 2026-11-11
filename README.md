@@ -26,7 +26,7 @@ Comparison, metrics and plots (pass@k, solve rate and variance, calls, tokens, c
 .venv\Scripts\python.exe scripts/make_plots.py --manifest evaluation_manifest.json --a runs/eval --b runs/fix --out runs/plots
 ```
 
-The draft report is `REPORT_DRAFT.md`; the hand-off notes are `HANDOFF.md`. `runs/fix_aborted_docker_down/` and
+The report is `REPORT.md` (`REPORT_DRAFT.md` is an earlier draft, superseded); the hand-off notes are `HANDOFF.md`. The demo run for the video is in `runs/demo/`. `runs/fix_aborted_docker_down/` and
 `runs/fix_aborted_network_down/` hold two failed launches (Docker stopped; gateway unreachable) kept as incident records, not results.
 
 > The professor confirmed on Nov 9 that the guide's "kit" (`course-compose.yaml`, private verifier, helper scripts, shared

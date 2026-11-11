@@ -1,5 +1,7 @@
 # HANDOFF: Part 1 is done, Part 2 starts here (updated Nov 10, night)
 
+> **UPDATE Nov 11:** Jack pushed the final report (`REPORT.md`) and the demo run for the video (`runs/demo/`, `agent-fix` on `rev-checker`, solved in 3 steps, 6.7 s). `REPORT_DRAFT.md` is superseded. His per-challenge table, pass@k, token and time numbers match the raw records (checked). Open items from the review are listed in the team chat; see also the cost-price note: `REPORT.md` uses $0.05 in / $0.25 out per million tokens ("Duke price"), while the older notes here use Anthropic list price ($0.10 / $0.50).
+
 Deadline: **Wed Nov 11, 2026, 11:59 p.m. Eastern.** Aim to submit by about 8 p.m. Repo: https://github.com/Puminunp/ctf-agent (private).
 Read this file first, then `README.md`, then `REPORT_DRAFT.md`. The shared checklist page is https://claude.ai/artifact/FhoQRbmdLnckKTp6WtEVM8.
 

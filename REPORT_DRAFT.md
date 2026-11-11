@@ -1,3 +1,5 @@
+> **SUPERSEDED (Nov 11):** the submitted report is `REPORT.md`. This file is the earlier draft and is kept only for history. Its cost figures use Anthropic list price; `REPORT.md` uses the Duke price.
+
 # CTF Agent Benchmarking: Part 1 report (draft)
 
 Team: Pumin, JackDeBuff. Repository: https://github.com/Puminunp/ctf-agent (private). Frozen baseline: tag `frozen-eval-v1`, commit `7082312`.
