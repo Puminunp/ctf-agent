@@ -1,0 +1,32 @@
+{
+  "run_id": "agent-fix-rev-checker-t1",
+  "config_fingerprint": "4ee01b93801c2c92",
+  "model": "claude-haiku-5-5",
+  "agent_version": "0.1.0",
+  "git": {
+    "commit": "3dfb95eccab7c44e8fcd44003bd2a144b7373b42",
+    "dirty": false
+  },
+  "started_unix": 1794384954.5852501,
+  "reset_s": 1.209,
+  "export_inventory": [
+    {
+      "file": "checker.py",
+      "sha256": "98bec881c8de88232671d9a93fca02a14207d0b4c168b24b90ae08cb4dbe91f2",
+      "bytes": 775
+    }
+  ],
+  "stop_reason": "verified",
+  "steps": 3,
+  "llm_calls": 3,
+  "tool_calls": 3,
+  "wrong_flags": 0,
+  "usage_complete": true,
+  "submissions": [
+    {
+      "step": 3,
+      "verified": true,
+      "candidate_sha256_12": "02f5079957b7"
+    }
+  ]
+}

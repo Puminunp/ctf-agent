@@ -1,0 +1,71 @@
+{
+  "challenge_id": "rev-checker",
+  "when_utc": "2026-11-11T08:13:15+00:00",
+  "has_target": false,
+  "all_passed": true,
+  "checks": [
+    {
+      "check": "runs as non-root",
+      "command": "id -u",
+      "exit_code": 0,
+      "output": "1000",
+      "passed": true
+    },
+    {
+      "check": "no sudo",
+      "command": "command -v sudo",
+      "exit_code": 1,
+      "output": "",
+      "passed": true
+    },
+    {
+      "check": "no capabilities",
+      "command": "grep CapEff /proc/self/status",
+      "exit_code": 0,
+      "output": "CapEff:\t0000000000000000",
+      "passed": true
+    },
+    {
+      "check": "no Docker socket",
+      "command": "test -e /var/run/docker.sock",
+      "exit_code": 1,
+      "output": "",
+      "passed": true
+    },
+    {
+      "check": "internet blocked (https)",
+      "command": "curl -sS -m 6 -o /dev/null https://example.com",
+      "exit_code": 6,
+      "output": "curl: (6) Could not resolve host: example.com",
+      "passed": true
+    },
+    {
+      "check": "internet blocked (raw IP)",
+      "command": "curl -sS -m 6 -o /dev/null http://1.1.1.1",
+      "exit_code": 7,
+      "output": "curl: (7) Couldn't connect to server",
+      "passed": true
+    },
+    {
+      "check": "host blocked (host.docker.internal)",
+      "command": "curl -sS -m 6 -o /dev/null http://host.docker.internal",
+      "exit_code": 6,
+      "output": "curl: (6) Could not resolve host: host.docker.internal",
+      "passed": true
+    },
+    {
+      "check": "answer files absent",
+      "command": "ls /flag.txt /workspace/flag.txt /workspace/challenge.json /workspace/solve.txt /workspace/solver.py 2>&1 | grep -c 'No such file'",
+      "exit_code": 0,
+      "output": "5",
+      "passed": true
+    },
+    {
+      "check": "workspace holds only listed files",
+      "command": "ls -A /workspace | sort | tr '\\n' ' '",
+      "exit_code": 0,
+      "output": "checker.py",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"run_id": "agent-fix-rev-checker-t1", "config_id": "agent-fix", "challenge_id": "rev-checker", "trial": 1, "status": "solved", "verified": true, "elapsed_s": 6.713, "input_tokens": 5585, "output_tokens": 886, "cost_usd": null, "trace_file": "traces/agent-fix-rev-checker-t1.jsonl", "reset_id": "fresh-e0555746", "sample_type": "live"}
