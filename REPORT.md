@@ -22,7 +22,7 @@ Each attempt gets a fresh container: unprivileged user, no sudo, all capabilitie
 
 **Challenges.** Very Easy: `cry-hybrid2`, `rev-whataxor`, `rev-unvirtualization`. Easy: `cry-babycrypto`, `rev-rap`, `for-1black0white`, `web-smug-dino`. Moderate: `cry-collision-course`, `pwn-bigboy`. Hard: `rev-maze`. That is five categories and four levels. `msc-showdown` was skipped because it needs a privileged container. Development used four other challenges (`rev-checker`, `rev-beleaf`, `rev-tablez`, `pwn-puffin`), all solved.
 
-**Runs.** Trial 1 of all 10, then trial 2, then trial 3, each in a fresh container with a fresh conversation. Every attempt, including failures, is in `runs/<config>/results.jsonl` with a full trace. Each run used one clean commit. The config requests temperature 0.0, but the Duke gateway drops that setting before calling Claude Haiku 5.5: a direct test on November 11 found it accepts even an impossible temperature of 3.5. So the model ran at its default sampling, and runs were not repeatable step by step.
+**Runs.** Trial 1 of all 10, then trial 2, then trial 3, each in a fresh container with a fresh conversation. Every attempt, including failures, is in `runs/<config>/results.jsonl` with a full trace. Each run used one clean commit. The config requests temperature 0.0, but the Duke gateway appears to drop that setting before calling Claude Haiku 5.5: in a direct test on November 11, Supawich found it accepts even an impossible temperature of 3.5. So the model probably ran at its default sampling, and runs were not repeatable step by step.
 
 **Metrics.** Per challenge: solves out of 3, success rate, sample SD of the three 0/1 outcomes, and mean tokens and seconds. Standard pass@k averages 1 − C(3−c, k)/C(3, k) over challenges, where c = solves; its pass@1 equals the success rate. We also show "within the first k trials", which counts a challenge if any of its first k trials, in run order, solved it. Cost uses $0.05 in and $0.25 out per million tokens (Duke's price for Haiku 5.5); at Anthropic's list price ($0.10 in, $0.50 out) the same runs would cost $0.197 and $0.235.
 
@@ -82,7 +82,7 @@ Each attempt gets a fresh container: unprivileged user, no sudo, all capabilitie
 
 **Limitations.**
 
-- These challenges are too easy to show where the agent fails at solving; harder ones are needed.
+- All 54 completed attempts were solved, so this set cannot show where solving fails.
 - Only one small model was tested.
 - Two earlier launches of the full `agent-fix` run were harness failures, not results, and are kept as incident records: Docker Desktop had stopped (30 records of 0.3 s, no tokens, `runs/fix_aborted_docker_down/`), and then the gateway was unreachable without the Duke VPN (7 records of about 210 s, no tokens, `runs/fix_aborted_network_down/`). The third launch, over the VPN, is the reported run. An earlier re-run of only the 6 rate-limited slots (`runs/rerun/`, 6 of 6 solved) is superseded by the full run.
 - The token cap is checked before each call, so one attempt can overshoot it by one call.
@@ -101,4 +101,4 @@ We keep `agent-fix` for November 18, launched with `scripts/run_attempts.py --co
 
 **Contributions.** Paul Prommark built the agent, controller, sandbox, tests and analysis scripts, and ran the pilots and both scored runs. Supawich Puengdang researched the benchmark, models and controls, re-checked every metric from the raw records (correcting pass@k, token and cost reporting), verified the cited trace steps, and wrote the report.
 
-**AI use and reuse.** Code, tests and drafts were written with Claude Code (Anthropic), directed and reviewed by the team. We reused NYU CTF Bench and CTFTiny data, the `nyuctf` 1.1.1 loader, Duke's gateway guide, and the course Implementation Guide's control flow. Setup and launch commands are in `README.md`. The demo video shows a fresh `agent-fix` run on the practice challenge `rev-checker` (`runs/demo/`, solved in 3 steps and 6.7 s), recorded on an Apple Silicon Mac under x86 emulation and narrated with Gemini text-to-speech.
+**AI use and reuse.** Code, tests and drafts were written with Claude Code (Anthropic), directed and reviewed by the team. We reused NYU CTF Bench and CTFTiny data, the `nyuctf` 1.1.1 loader, Duke's gateway guide, and the course Implementation Guide's control flow. Setup and launch commands are in `README.md`. The demo video shows one fresh, uncut `agent-fix` run on the practice challenge `rev-tablez` (`runs/demo_video/`, run ID `agent-fix-rev-tablez-t1`, commit `b7be43c`): solved in 11 steps and 48.9 s, with one wrong flag before the correct one. Paul recorded and narrated it on his Windows x86-64 laptop.
