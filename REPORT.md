@@ -1,6 +1,6 @@
 # CTF Agent Benchmarking: Final Project Part 1
 
-**Team:** Paul Prommark (Pumin), Supawich Puengdang (Jack). **Repo:** `Puminunp/ctf-agent`. **Model:** `claude-haiku-5-5` via the Duke AI Gateway. **Benchmark:** 10 CTFTiny challenges (commit `f1c9531`). **Configs:** baseline `agent` (tag `frozen-eval-v1`, commit `7082312`); selected `agent-fix` (commit `2619f77`).
+**Team:** Paul Prommark, Supawich Puengdang. **Repo:** `Puminunp/ctf-agent`. **Model:** `claude-haiku-5-5` via the Duke AI Gateway. **Benchmark:** 10 CTFTiny challenges (commit `f1c9531`). **Configs:** baseline `agent` (tag `frozen-eval-v1`, commit `7082312`); selected `agent-fix` (commit `2619f77`).
 
 ## 1. Summary
 
@@ -24,7 +24,7 @@ Each attempt gets a fresh container: unprivileged user, no sudo, all capabilitie
 
 **Runs.** Trial 1 of all 10, then trial 2, then trial 3, each in a fresh container with a fresh conversation. Every attempt, including failures, is in `runs/<config>/results.jsonl` with a full trace. Each run used one clean commit. The config requests temperature 0.0, but the Duke gateway drops that setting before calling Claude Haiku 5.5: a direct test on November 11 found it accepts even an impossible temperature of 3.5. So the model ran at its default sampling, and runs were not repeatable step by step.
 
-**Metrics.** Per challenge: solves out of 3, success rate, sample SD of the three 0/1 outcomes, and mean tokens and seconds. Standard pass@k averages 1 − C(3−c, k)/C(3, k) over challenges, where c = solves; its pass@1 equals the success rate. We also show "within the first k trials", which counts a challenge if any of its first k trials, in run order, solved it. Cost uses Duke's price for Haiku 5.5: $0.05 in, $0.25 out per million tokens.
+**Metrics.** Per challenge: solves out of 3, success rate, sample SD of the three 0/1 outcomes, and mean tokens and seconds. Standard pass@k averages 1 − C(3−c, k)/C(3, k) over challenges, where c = solves; its pass@1 equals the success rate. We also show "within the first k trials", which counts a challenge if any of its first k trials, in run order, solved it. Cost uses $0.05 in and $0.25 out per million tokens (Duke's price for Haiku 5.5); at Anthropic's list price ($0.10 in, $0.50 out) the same runs would cost $0.197 and $0.235.
 
 ## 4. Results
 
@@ -57,6 +57,13 @@ Each attempt gets a fresh container: unprivileged user, no sudo, all capabilitie
 
 `rev-maze`, the only Hard challenge, took the most time and tokens: 11 to 22 steps per attempt and all 4 tool timeouts. Most other solves took 4 to 8 steps.
 
+**Figures** (`runs/plots/`, made by `scripts/make_plots.py`): pass@k, solve rate per trial with mean and variance, successes per challenge, and tokens and seconds per challenge, for `agent` and `agent-fix`.
+
+![Pass@k](runs/plots/pass_at_k.png)
+![Solve rate by trial](runs/plots/solve_rate_by_trial.png)
+![Successes per challenge](runs/plots/successes_per_challenge.png)
+![Tokens and seconds per challenge](runs/plots/tokens_and_seconds_per_challenge.png)
+
 ## 5. Problem, change and comparison
 
 **Problem.** Six baseline attempts ended on HTTP 429: `rev-rap` t1 and t2, `for-1black0white` t1, `web-smug-dino` t1, `rev-maze` t2, `cry-hybrid2` t3. The client retried only twice (waiting 1 s, then 2 s) and ignored the gateway's `Retry-After` header.
@@ -77,6 +84,7 @@ Each attempt gets a fresh container: unprivileged user, no sudo, all capabilitie
 
 - These challenges are too easy to show where the agent fails at solving; harder ones are needed.
 - Only one small model was tested.
+- Two earlier launches of the full `agent-fix` run were harness failures, not results, and are kept as incident records: Docker Desktop had stopped (30 records of 0.3 s, no tokens, `runs/fix_aborted_docker_down/`), and then the gateway was unreachable without the Duke VPN (7 records of about 210 s, no tokens, `runs/fix_aborted_network_down/`). The third launch, over the VPN, is the reported run. An earlier re-run of only the 6 rate-limited slots (`runs/rerun/`, 6 of 6 solved) is superseded by the full run.
 - The token cap is checked before each call, so one attempt can overshoot it by one call.
 - Five scored challenges ship x86-64 Linux binaries. The scored runs used Paul's Windows x86-64 laptop; on Apple Silicon the sandbox runs under x86 emulation.
 
@@ -89,7 +97,7 @@ We keep `agent-fix` for November 18, launched with `scripts/run_attempts.py --co
 
 ## 8. Disclosures, contributions and AI use
 
-**Prior exposure.** No scored challenge was run or read before the scored run. Flags of two development challenges appeared in a working chat. In 52 of 54 solves, the exact flag appeared in tool output before submission; the other two assembled it from earlier output. CSAW write-ups are public, so the model may have seen these challenges before.
+**Prior exposure.** No scored challenge was run or read before the scored run. Three challenges from our first scored list (`rev-checker`, `rev-beleaf`, `pwn-puffin`) were run as pilots and replaced before scoring, so they are development challenges. The full `rev-checker` flag and part of the `rev-beleaf` flag appeared in a working chat while we read pilot traces. After the baseline run, a partial decoded string of the `for-1black0white` flag (a scored challenge) appeared in the same chat while we analysed a failure; it came after scoring and changed no result. In nearly all solves (52 to 53 of 54, depending on how they are counted) the exact flag appeared in tool output before submission; the rest assembled it from earlier output. CSAW write-ups are public, so the model may have seen these challenges before.
 
 **Contributions.** Paul Prommark built the agent, controller, sandbox, tests and analysis scripts, and ran the pilots and both scored runs. Supawich Puengdang researched the benchmark, models and controls, re-checked every metric from the raw records (correcting pass@k, token and cost reporting), verified the cited trace steps, and wrote the report.
 

@@ -126,7 +126,7 @@ Carry `agent-fix` (`configs/agent-fix.json`, launched with `scripts/run_attempts
 
 ## 9. Contributions and AI assistance
 
-- [Pumin: state your contribution, for example running and monitoring the evaluation, choosing challenges and decisions.]
+- [Paul: state your contribution, for example running and monitoring the evaluation, choosing challenges and decisions.]
 - [Jack: state your contribution, for example the report, analysis and video.]
 - AI assistance: the code, scripts, tests and drafts of this document were written with Claude Code (Anthropic's Claude), directed by the team, who ran and reviewed the work. The runtime agent model is `claude-haiku-5-5` via the Duke AI Gateway.
 - Reused: NYU CTF Bench and CTFTiny data, the `nyuctf` loader (version 1.1.1), Duke's AI Gateway developer guide, and the control flow of the course Implementation Guide.

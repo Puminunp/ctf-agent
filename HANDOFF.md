@@ -3,7 +3,7 @@
 > **UPDATE Nov 11:** Jack pushed the final report (`REPORT.md`) and the demo run for the video (`runs/demo/`, `agent-fix` on `rev-checker`, solved in 3 steps, 6.7 s). `REPORT_DRAFT.md` is superseded. His per-challenge table, pass@k, token and time numbers match the raw records (checked). Open items from the review are listed in the team chat; see also the cost-price note: `REPORT.md` uses $0.05 in / $0.25 out per million tokens ("Duke price"), while the older notes here use Anthropic list price ($0.10 / $0.50).
 
 Deadline: **Wed Nov 11, 2026, 11:59 p.m. Eastern.** Aim to submit by about 8 p.m. Repo: https://github.com/Puminunp/ctf-agent (private).
-Read this file first, then `README.md`, then `REPORT_DRAFT.md`. The shared checklist page is https://claude.ai/artifact/FhoQRbmdLnckKTp6WtEVM8.
+Read this file first, then `README.md`, then `REPORT.md`. The shared checklist page is https://claude.ai/artifact/FhoQRbmdLnckKTp6WtEVM8.
 
 ## 1. Where things stand
 
@@ -16,7 +16,7 @@ Read this file first, then `README.md`, then `REPORT_DRAFT.md`. The shared check
 | Fix `agent-fix` (retry policy only) and its full run (30 attempts) | Done: 30 solved, 0 errors. |
 | Comparison, metrics, plots | Done (`runs/comparison.md`, `runs/comparison.json`, `runs/plots/*.png`). |
 | Report | **Draft** in `REPORT_DRAFT.md`. Needs trimming to about 3 pages, plots inserted, contribution statements. |
-| Video of a fresh successful run | **Not done** (Pumin will record it). |
+| Video of a fresh successful run | **Not done** (Paul will record it). |
 | Clean-clone README check | **Not done** (Jack). |
 | Canvas package | **Not done** (both). |
 
@@ -97,17 +97,19 @@ source and sometimes `solve.txt`; none of that is exported (checked). `msc-showd
 
 ## 7. What is left
 
-**Jack**
-1. You are already a collaborator. Clone the repo: `git clone https://github.com/Puminunp/ctf-agent.git`.
-2. Check the numbers in the Results section against `runs/eval/summary.json`, `runs/fix/summary.json`, `runs/comparison.md`.
-3. Turn `REPORT_DRAFT.md` into the report: about 3 pages, insert the plots from `runs/plots/`, keep the results tables, the annotated failure, limits, configuration decision and disclosures.
-4. Verify the cited trace steps with `scripts/show_trace.py <trace> --no-output` (never open scored traces to hunt for answers).
-5. Clean-clone test: follow the README from a fresh clone (the Windows data note matters; Docker Desktop and the Duke VPN are needed for live runs; the offline tests need neither).
+**Jack** (the report `REPORT.md` and a demo run in `runs/demo/` are already pushed; his numbers were checked against the raw records on Nov 11)
+1. Cost price: cite the source of the $0.05 in / $0.25 out per million tokens ("Duke price") used in `REPORT.md`, or use one price consistently. The repo's other notes and `scripts/compare_configs.py` use Anthropic list price ($0.10 / $0.50).
+2. Verify the temperature claim in `REPORT.md` (gateway accepts temperature 3.5). It is not re-verified by anyone else.
+3. Demo sentence in section 8 of `REPORT.md`: update it to the final video (run ID, commit, machine, narration) once Paul has recorded it.
+4. Convert `REPORT.md` to a PDF (or Word file), check it is about 3 pages, and confirm the four plots render.
+5. Clean-clone test: on Nov 11 a fresh clone was tested by the repo owner (56 tests pass, shipped results validate), but a Windows clean-clone test of the live setup by Jack has not been confirmed.
 6. Optional: pin the pip packages in `docker/solver/Dockerfile`.
 
-**Pumin**
-1. Record the video (3 minutes max): one fresh run, a short development challenge such as `rev-tablez`, config `agent-fix`, commit, challenge ID, run ID, tool activity, the controller's confirmation; disclose any cuts; keep the key and scored traces off screen.
-2. Write your contribution statement in the report; revoke your API keys afterward.
+Already applied in `REPORT.md` on Nov 11: the extra disclosures (three swapped challenges, the `for-1black0white` partial exposure, the "52 to 53 of 54" wording), the incident sentence for the two failed launches, both cost prices, and the four plots.
+
+**Paul**
+1. Record the video (3 minutes max): one fresh run, a short development challenge such as `rev-tablez`, config `agent-fix`, `--out runs/demo_video`; show commit, challenge ID, run ID, tool activity, the controller's confirmation; disclose any cuts; keep the key and scored traces off screen. Push `runs/demo_video` and send Jack the run ID, commit and video link.
+2. Approve your contribution statement in `REPORT.md`; revoke your API keys afterward.
 
 **Both**
 - Merge the report, add each member's contribution and the AI-assistance and reuse statements, tag the submitted commit (for example `git tag submission-v1`), and submit in Canvas by about 8 p.m.:

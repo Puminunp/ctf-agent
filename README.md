@@ -11,6 +11,11 @@ A tool-using CTF solver plus a trusted controller. Two configurations are compar
 Both use `prompts/system.md`, model `claude-haiku-5-5` through the Duke AI Gateway, and the same tools and limits. The only
 difference is the gateway retry policy (`agent-fix`: up to 6 retries, waits up to 60 s, honors `Retry-After`, 150 s total wait per call).
 
+Two caveats, both also in `REPORT.md`: (1) the configs request `temperature: 0.0`, but a direct test reported in `REPORT.md` found the Duke gateway
+accepts any temperature (even 3.5), which suggests it is not applied to `claude-haiku-5-5`, so runs are not repeatable step by step (this was not
+re-verified by the repo owner); (2) cost is an estimate: `REPORT.md` uses $0.05 in / $0.25 out per million tokens (Duke's price), while `scripts/compare_configs.py`
+uses Anthropic's list price ($0.10 / $0.50), so its totals ($0.197 and $0.235) are twice the report's ($0.099 and $0.117).
+
 **Launch command for the selected configuration** (PowerShell, Docker Desktop running, Duke VPN or network connected, `LITELLM_TOKEN` set):
 
 ```powershell
@@ -22,7 +27,7 @@ Comparison, metrics and plots (pass@k, solve rate and variance, calls, tokens, c
 
 ```powershell
 .venv\Scripts\python.exe scripts/compare_configs.py --manifest evaluation_manifest.json --a runs/eval --b runs/fix --out runs/comparison.json --md runs/comparison.md
-.venv\Scripts\python.exe -m pip install -r requirements-plots.txt   # once
+uv pip install -r requirements-plots.txt --python .venv\Scripts\python.exe   # once (a uv venv has no pip)
 .venv\Scripts\python.exe scripts/make_plots.py --manifest evaluation_manifest.json --a runs/eval --b runs/fix --out runs/plots
 ```
 
