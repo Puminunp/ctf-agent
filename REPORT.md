@@ -57,12 +57,11 @@ Each attempt gets a fresh container: unprivileged user, no sudo, all capabilitie
 
 `rev-maze`, the only Hard challenge, took the most time and tokens: 11 to 22 steps per attempt and all 4 tool timeouts. Most other solves took 4 to 8 steps.
 
-**Figures** (`runs/plots/`, made by `scripts/make_plots.py`): pass@k, solve rate per trial with mean and variance, successes per challenge, and tokens and seconds per challenge, for `agent` and `agent-fix`.
+**Figures** (`runs/plots/`, made by `scripts/make_plots.py`): pass@k, solve rate per trial with mean and variance, and successes per challenge, for `agent` and `agent-fix`. The tokens and seconds per challenge are in the table above (the chart is `runs/plots/tokens_and_seconds_per_challenge.png`).
 
 ![Pass@k](runs/plots/pass_at_k.png)
 ![Solve rate by trial](runs/plots/solve_rate_by_trial.png)
 ![Successes per challenge](runs/plots/successes_per_challenge.png)
-![Tokens and seconds per challenge](runs/plots/tokens_and_seconds_per_challenge.png)
 
 ## 5. Problem, change and comparison
 

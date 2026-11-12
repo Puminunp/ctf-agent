@@ -68,12 +68,13 @@ def main() -> None:
         vals = [pass_k(rows, ids, k) for k in ks]
         bars = ax.bar([k + (i - 0.5) * w for k in ks], vals, w, label=n, color=COLORS[i])
         for b_, v in zip(bars, vals):
-            ax.text(b_.get_x() + b_.get_width() / 2, v + 1.5, f"{v:.0f}", ha="center", fontsize=9)
+            ax.text(b_.get_x() + b_.get_width() / 2, v + 1.5, f"{v:.0f}", ha="center", fontsize=9, clip_on=False)
     ax.set_xticks(ks, [f"Pass@{k}" for k in ks])
     ax.set_ylabel("Challenges solved within k trials (%)")
     ax.set_ylim(0, 112)
-    ax.set_title("Pass@k over 10 challenges (all attempts counted)")
-    ax.legend(frameon=False, loc="lower right")
+    ax.set_yticks([0, 20, 40, 60, 80, 100])
+    ax.set_title("Pass@k over 10 challenges (all attempts counted)", pad=22)
+    ax.legend(frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, borderaxespad=0.2)
     fig.tight_layout()
     fig.savefig(out / "pass_at_k.png", dpi=200)
     plt.close(fig)
@@ -99,15 +100,15 @@ def main() -> None:
     plt.close(fig)
 
     # 3. successes out of 3 per challenge
-    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    fig, ax = plt.subplots(figsize=(7.2, 3.0))
     for i, (n, rows) in enumerate([(na, ra), (nb, rb)]):
         vals = [sum(r["verified"] for r in rows if r["challenge_id"] == c) for c in ids]
         ax.bar([x + (i - 0.5) * w for x in range(len(ids))], vals, w, label=n, color=COLORS[i])
     ax.set_xticks(range(len(ids)), ids, rotation=40, ha="right", fontsize=8)
     ax.set_ylabel("Successes out of 3")
     ax.set_yticks([0, 1, 2, 3])
-    ax.set_title("Successes per challenge")
-    ax.legend(frameon=False, loc="lower right")
+    ax.set_title("Successes per challenge", pad=22)
+    ax.legend(frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, borderaxespad=0.2)
     fig.tight_layout()
     fig.savefig(out / "successes_per_challenge.png", dpi=200)
     plt.close(fig)
