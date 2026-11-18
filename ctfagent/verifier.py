@@ -11,6 +11,10 @@ import hmac
 from typing import Protocol
 
 
+class VerifierUnavailable(Exception):
+    """The flag could not be checked right now (the checker is unreachable). It was neither right nor wrong."""
+
+
 class Verifier(Protocol):
     def verify(self, candidate: str) -> bool: ...
 

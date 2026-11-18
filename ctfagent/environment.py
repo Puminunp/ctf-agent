@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import re
 import subprocess
 import tarfile
@@ -90,6 +91,99 @@ networks:
     return text
 
 
+# Runs in the forwarder container: accepts connections on each port and relays them to the same port on
+# one remote host. It must not contain a dollar sign (Compose would try to substitute it).
+FORWARDER = '''
+import socket, sys, threading
+host, ports = sys.argv[1], [int(p) for p in sys.argv[2:]]
+def pipe(a, b, done):
+    try:
+        while True:
+            data = a.recv(65536)
+            if not data:
+                break
+            b.sendall(data)
+    except OSError:
+        pass
+    try:
+        b.shutdown(socket.SHUT_WR)
+    except OSError:
+        pass
+    done.release()
+def handle(client, port):
+    try:
+        remote = socket.create_connection((host, port), timeout=15)
+    except OSError:
+        client.close()
+        return
+    remote.settimeout(None)
+    done = threading.Semaphore(0)
+    threading.Thread(target=pipe, args=(client, remote, done), daemon=True).start()
+    threading.Thread(target=pipe, args=(remote, client, done), daemon=True).start()
+    done.acquire()
+    done.acquire()
+    client.close()
+    remote.close()
+def serve(port):
+    server = socket.create_server(("0.0.0.0", port))
+    while True:
+        client, _ = server.accept()
+        threading.Thread(target=handle, args=(client, port), daemon=True).start()
+for p in ports[1:]:
+    threading.Thread(target=serve, args=(p,), daemon=True).start()
+serve(ports[0])
+'''
+
+
+def render_remote_compose(cfg: EnvironmentConfig, remote_host: str | None, ports: list[int]) -> str:
+    """The compose file for one attempt against a target that lives somewhere else (a hosted CTF).
+
+    "forward" (the default): the solver sits on an internal network with no route out. A second container
+    named like the target relays the listed ports to the one remote host, so that host and those ports are
+    all the solver can reach. "open" puts the solver on a normal network instead; use it only when a
+    challenge cannot work through a relay.
+    """
+    assert "$" not in FORWARDER
+    platform = f"    platform: {cfg.platform}\n" if cfg.platform else ""
+    hardening = f"""    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+"""
+    solver = f"""services:
+  solver:
+    image: {cfg.solver_image}
+{platform}    command: ["sleep", "infinity"]
+    user: "1000:1000"
+    working_dir: {cfg.workdir}
+{hardening}    mem_limit: {cfg.memory}
+    cpus: {cfg.cpus}
+    pids_limit: {cfg.pids_limit}
+"""
+    if not remote_host or not ports:
+        return solver + "    network_mode: none\n"
+    if cfg.remote_network == "open":
+        return solver + "    networks:\n      - ctf_egress\nnetworks:\n  ctf_egress: {}\n"
+    if cfg.remote_network != "forward":
+        raise EnvironmentError_(f"unknown remote_network {cfg.remote_network!r}")
+    command = json.dumps(["python3", "-u", "-c", FORWARDER, remote_host, *[str(p) for p in ports]])
+    return solver + f"""    networks:
+      - ctf_internal
+  {cfg.target_host}:
+    image: {cfg.solver_image}
+{platform}    command: {command}
+    user: "1000:1000"
+{hardening}    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 256
+    networks:
+      - ctf_internal
+      - ctf_egress
+networks:
+  ctf_internal:
+    internal: true
+  ctf_egress: {{}}
+"""
+
+
 class ComposeEnvironment:
     def __init__(self, cfg: EnvironmentConfig, work_dir: str | Path = "runs/compose", docker: str = "docker"):
         self.cfg = cfg
@@ -109,11 +203,15 @@ class ComposeEnvironment:
 
     def reset(self, challenge_id: str, chal) -> str:
         """Tear down everything including volumes, then start a clean solver (and target)."""
-        image = target_image(Path(chal.challenge_dir)) if getattr(chal, "container", False) else None
         self._project = re.sub(r"[^a-z0-9_-]", "-", f"{self.cfg.project_prefix}-{challenge_id}".lower())
         self.work_dir.mkdir(parents=True, exist_ok=True)
         self._file = self.work_dir / f"{self._project}.yaml"
-        self._file.write_text(render_compose(self.cfg, image), encoding="utf-8")
+        if getattr(chal, "is_remote", False):   # hosted CTF: the target is not ours to run
+            text = render_remote_compose(self.cfg, chal.remote_host, list(chal.remote_ports))
+        else:
+            image = target_image(Path(chal.challenge_dir)) if getattr(chal, "container", False) else None
+            text = render_compose(self.cfg, image)
+        self._file.write_text(text, encoding="utf-8")
         self._compose(["down", "-v", "--remove-orphans"])
         self._compose(["up", "-d", "--wait", "--force-recreate"])
         cid = self._compose(["ps", "-q", "solver"]).strip()

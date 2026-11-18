@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import __version__
@@ -15,7 +16,7 @@ from .agent import run_attempt
 from .challenges import Task, build_task, host_file_paths, task_prompt
 from .config import Config, fingerprint
 from .trace import Trace
-from .verifier import HashVerifier
+from .verifier import HashVerifier, Verifier
 
 A4_FIELDS = ["run_id", "config_id", "challenge_id", "trial", "status", "verified", "elapsed_s",
              "input_tokens", "output_tokens", "cost_usd", "trace_file", "reset_id", "sample_type"]
@@ -27,6 +28,19 @@ def git_state(repo: Path) -> dict:
     # untracked files (such as the run's own output folder) do not make the code "dirty"
     return {"commit": g("rev-parse", "HEAD") or None,
             "dirty": bool(g("status", "--porcelain", "--untracked-files=no"))}
+
+
+@dataclass
+class Prepared:
+    """What one attempt needs once its environment is up."""
+    reset_id: str
+    verifier: Verifier
+    task_prompt: str
+    allowed_hosts: set
+
+
+NOTES_HEADER = ("\n\nNotes left by an earlier attempt at this challenge. They may be wrong or incomplete, so "
+                "check anything you rely on:\n")
 
 
 class Controller:
@@ -48,47 +62,77 @@ class Controller:
         rows = [json.loads(line) for line in p.read_text(encoding="utf-8").splitlines() if line.strip()]
         return {(r["challenge_id"], r["trial"]) for r in rows}
 
+    def prepare(self, challenge_id: str, trace: Trace, detail: dict) -> Prepared:
+        """Reset the environment and hand out the files for a local (CTFTiny) challenge."""
+        t0 = time.monotonic()
+        chal = self.loader(challenge_id)
+        verifier = HashVerifier(chal.flag)
+        task: Task = build_task(challenge_id, chal, self.cfg.environment.target_host)
+        reset_id = self.env.reset(challenge_id, chal)
+        inventory = self.env.export(host_file_paths(chal), self.cfg.environment.workdir)
+        detail["reset_s"] = round(time.monotonic() - t0, 3)
+        detail["export_inventory"] = inventory
+        trace.event("environment_ready", reset_id=reset_id, files=inventory)
+        return Prepared(reset_id, verifier, task_prompt(task, self.cfg.environment.workdir), task.allowed_hosts)
+
+    def cleanup(self, challenge_id: str, detail: dict) -> None:
+        self.env.stop()
+
+    def prior_notes(self, challenge_id: str) -> str | None:
+        """The newest notes an earlier attempt left for this challenge, from any configuration."""
+        best = None
+        for path in (self.out / "details").glob("*.json"):
+            try:
+                d = json.loads(path.read_text(encoding="utf-8"))
+            except ValueError:
+                continue
+            if d.get("challenge_id") == challenge_id and d.get("notes"):
+                if best is None or d.get("started_unix", 0) > best.get("started_unix", 0):
+                    best = d
+        return best["notes"] if best else None
+
     def run_one(self, challenge_id: str, trial: int) -> dict:
         run_id = f"{self.cfg.config_id}-{challenge_id}-t{trial}"
         trace_path = self.out / "traces" / f"{run_id}.jsonl"
         trace = Trace(trace_path, secrets=self.secrets)
-        detail: dict = {"run_id": run_id, "config_fingerprint": fingerprint(self.cfg, self.system_prompt),
+        detail: dict = {"run_id": run_id, "challenge_id": challenge_id,
+                        "config_fingerprint": fingerprint(self.cfg, self.system_prompt),
                         "model": self.cfg.model, "agent_version": __version__,
                         "git": git_state(self.repo_dir), "started_unix": time.time()}
-        reset_id = None
+        reset_id, cost = None, None
         t0 = time.monotonic()
         try:
-            chal = self.loader(challenge_id)
-            verifier = HashVerifier(chal.flag)
-            task: Task = build_task(challenge_id, chal, self.cfg.environment.target_host)
-            reset_id = self.env.reset(challenge_id, chal)
-            inventory = self.env.export(host_file_paths(chal), self.cfg.environment.workdir)
-            detail["reset_s"] = round(time.monotonic() - t0, 3)
-            detail["export_inventory"] = inventory
-            trace.event("environment_ready", reset_id=reset_id, files=inventory)
+            ready = self.prepare(challenge_id, trace, detail)
+            reset_id = ready.reset_id
+            prompt = ready.task_prompt
+            notes = self.prior_notes(challenge_id) if self.cfg.handoff_notes else None
+            if notes:
+                prompt += NOTES_HEADER + notes
+                detail["used_prior_notes"] = True
             res = run_attempt(
-                cfg=self.cfg, llm=self.llm, executor=self.env.executor(), verifier=verifier, trace=trace,
-                system_prompt=self.system_prompt, task_prompt=task_prompt(task, self.cfg.environment.workdir),
-                allowed_hosts=task.allowed_hosts)
+                cfg=self.cfg, llm=self.llm, executor=self.env.executor(), verifier=ready.verifier, trace=trace,
+                system_prompt=self.system_prompt, task_prompt=prompt, allowed_hosts=ready.allowed_hosts)
             status, verified, elapsed = res.status, res.verified, res.elapsed_s
-            tokens = (res.input_tokens, res.output_tokens)
+            tokens, cost = (res.input_tokens, res.output_tokens), res.cost_usd
             detail.update(stop_reason=res.stop_reason, steps=res.steps, llm_calls=res.llm_calls,
                           tool_calls=res.tool_calls, wrong_flags=res.wrong_flags,
                           usage_complete=res.usage_complete, submissions=res.submissions)
+            if res.notes:
+                detail["notes"] = res.notes
         except Exception as e:  # keep the record: infrastructure failures are reported, never dropped
             status, verified, elapsed, tokens = "infrastructure_error", False, round(time.monotonic() - t0, 3), (None, None)
             detail["error"] = f"{type(e).__name__}: {e}"
             trace.event("infrastructure_error", error=detail["error"])
         finally:
             try:
-                self.env.stop()
+                self.cleanup(challenge_id, detail)
             except Exception as e:
                 detail["stop_error"] = f"{type(e).__name__}: {e}"
 
         record = {
             "run_id": run_id, "config_id": self.cfg.config_id, "challenge_id": challenge_id, "trial": trial,
             "status": status, "verified": verified, "elapsed_s": elapsed,
-            "input_tokens": tokens[0], "output_tokens": tokens[1], "cost_usd": None,
+            "input_tokens": tokens[0], "output_tokens": tokens[1], "cost_usd": cost,
             "trace_file": str(Path("traces") / trace_path.name).replace("\\", "/"),
             "reset_id": reset_id, "sample_type": self.sample_type,
         }

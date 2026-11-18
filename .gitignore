@@ -8,3 +8,8 @@ external/
 runs/pilot/
 runs/dev/
 runs/scratch/
+# HTB competition traces (carry partial flag fragments) + Claude Code local config — never commit
+runs/race/
+runs/race-deepseek/
+runs/htb-test/
+.claude/

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shlex
 import time
 from dataclasses import dataclass, field
@@ -18,9 +19,34 @@ from .llm import LLMError
 from .scope import find_violations
 from .tools import TOOL_SPECS, check_call, truncate
 from .trace import Trace
-from .verifier import Verifier
+from .verifier import Verifier, VerifierUnavailable
 
 SUCCESS = "solved"
+
+TRIM_NOTE = "\n[older output shortened by the controller; run the command again if you need all of it]"
+NOTES_REQUEST = ("Stop here: this attempt is out of budget. Do not call a tool. In under 200 words, write notes for a "
+                 "teammate who will continue this challenge from scratch: what you established, what you ruled out, "
+                 "and the single most promising next step. Facts only.")
+
+
+def shrink_old_outputs(messages: list[dict], keep: int, max_chars: int) -> int:
+    """Shorten every tool result except the newest `keep`, in place. Returns how many were shortened.
+
+    The model re-reads the whole history on every step, so old tool output is the largest share of the
+    input tokens. The full text is still in the trace.
+    """
+    if keep <= 0:
+        return 0
+    tool_idx = [i for i, m in enumerate(messages) if m.get("role") == "tool"]
+    changed = 0
+    for i in tool_idx[:-keep]:
+        text = messages[i].get("content") or ""
+        if len(text) <= max_chars + len(TRIM_NOTE) or text.endswith(TRIM_NOTE):
+            continue
+        head, tail = max_chars * 2 // 3, max_chars // 3
+        messages[i] = {**messages[i], "content": text[:head] + "\n[...]\n" + text[-tail:] + TRIM_NOTE}
+        changed += 1
+    return changed
 
 
 @dataclass
@@ -37,6 +63,8 @@ class AttemptResult:
     wrong_flags: int = 0
     usage_complete: bool = True
     submissions: list = field(default_factory=list)
+    cost_usd: float | None = None    # from the configured prices; None when the model is not priced
+    notes: str | None = None         # the model's own summary when an attempt ends without a flag
 
 
 def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, trace: Trace,
@@ -56,9 +84,15 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
     seen_calls: dict[str, int] = {}
     submissions: list[dict] = []
     status, stop_reason, verified = "no_flag", "model_stopped", False
+    flag_re = re.compile(cfg.flag_format) if cfg.flag_format else None
+    held_back: set[str] = set()
+    priced = bool(cfg.pricing.input_usd_per_mtok or cfg.pricing.output_usd_per_mtok)
 
     def elapsed() -> float:
         return clock() - start
+
+    def cost() -> float:
+        return cfg.pricing.cost(in_tok, out_tok)
 
     while True:
         if elapsed() >= lim.wall_clock_s:
@@ -69,6 +103,9 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
             break
         if in_tok + out_tok >= lim.max_total_tokens:
             status, stop_reason = "budget_exhausted", "token_limit"
+            break
+        if lim.max_cost_usd > 0 and cost() >= lim.max_cost_usd:
+            status, stop_reason = "budget_exhausted", "cost_limit"
             break
 
         try:
@@ -120,7 +157,25 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
             args = checked.args
 
             if call.name == "submit_flag":
-                ok = verifier.verify(args["flag"])
+                if flag_re and not flag_re.fullmatch(args["flag"].strip()) and args["flag"] not in held_back:
+                    # Held back once, at no wrong-flag cost. The same string sent again goes through, in case
+                    # a challenge really does use another format.
+                    held_back.add(args["flag"])
+                    trace.event("submission_rejected", step=steps, reason="format", candidate=args["flag"])
+                    messages.append({"role": "tool", "tool_call_id": call.id, "content":
+                                     f"not submitted: flags for this event normally match {cfg.flag_format}. "
+                                     "If you are sure this exact string is the flag, submit it again."})
+                    continue
+                try:
+                    ok = verifier.verify(args["flag"])
+                except VerifierUnavailable as e:
+                    # Logged in the clear on purpose: a person can submit it by hand if the checker stays down.
+                    trace.event("submission_unchecked", step=steps, candidate=args["flag"], error=str(e))
+                    submissions.append({"step": steps, "verified": None, "unchecked": True})
+                    messages.append({"role": "tool", "tool_call_id": call.id, "content":
+                                     "error: the flag checker could not be reached, so this flag was not judged. "
+                                     "Submit the same flag once more."})
+                    continue
                 digest = hashlib.sha256(args["flag"].encode()).hexdigest()[:12]
                 sub = {"step": steps, "verified": ok, "candidate_sha256_12": digest}
                 if ok:
@@ -172,15 +227,29 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
 
         if finished:
             break
+        shrink_old_outputs(messages, lim.keep_tool_outputs, lim.old_output_chars)
+
+    notes = None
+    if cfg.handoff_notes and not verified and steps > 0 and status in ("budget_exhausted", "timeout", "wrong_flag"):
+        try:
+            resp = llm.complete(messages + [{"role": "user", "content": NOTES_REQUEST}], [])
+            llm_calls += 1
+            in_tok += resp.input_tokens or 0
+            out_tok += resp.output_tokens or 0
+            notes = (resp.content or "").strip()[:2000] or None
+            trace.event("handoff_notes", notes=notes, input_tokens=resp.input_tokens, output_tokens=resp.output_tokens)
+        except LLMError as e:
+            trace.event("llm_error", error=f"notes: {e}")
 
     elapsed_s = round(elapsed(), 3)
     result = AttemptResult(
         status=status, verified=verified, elapsed_s=elapsed_s,
         input_tokens=in_tok if usage_seen else None, output_tokens=out_tok if usage_seen else None,
         stop_reason=stop_reason, steps=steps, llm_calls=llm_calls, tool_calls=tool_calls,
-        wrong_flags=wrong, usage_complete=usage_complete, submissions=submissions)
+        wrong_flags=wrong, usage_complete=usage_complete, submissions=submissions,
+        cost_usd=round(cost(), 6) if priced and usage_seen else None, notes=notes)
     trace.event("attempt_end", status=status, verified=verified, stop_reason=stop_reason, elapsed_s=elapsed_s,
                 input_tokens=result.input_tokens, output_tokens=result.output_tokens,
                 steps=steps, llm_calls=llm_calls, tool_calls=tool_calls, wrong_flags=wrong,
-                usage_complete=usage_complete)
+                usage_complete=usage_complete, cost_usd=result.cost_usd)
     return result

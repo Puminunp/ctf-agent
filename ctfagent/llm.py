@@ -63,10 +63,10 @@ class GatewayClient:
         return wait
 
     def complete(self, messages: list[dict], tools: list[dict]) -> LLMResponse:
-        body = json.dumps({
-            "model": self.model, "messages": messages, "tools": tools,
-            "tool_choice": "auto", "temperature": self.temperature,
-        }).encode()
+        payload = {"model": self.model, "messages": messages, "temperature": self.temperature}
+        if tools:   # a call with no tools is used for the end-of-attempt notes
+            payload.update(tools=tools, tool_choice="auto")
+        body = json.dumps(payload).encode()
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self._token}"}
         problem, retry_after, waited = "unknown", None, 0.0
         for attempt in range(self.retries + 1):
