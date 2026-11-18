@@ -16,6 +16,10 @@
     --purple:#bc8cff;--purple-dim:#2c2142;
     --gray:#55657d;  --gray-dim:#1a2231;
     --cyan:#39d0d8;  --blue:#4493f8;
+    /* per-model badge colors, grouped by family (Claude=violet, OpenAI=emerald/teal, DeepSeek=blue) */
+    --m-haiku:#d2b4ff; --m-sonnet:#bc8cff; --m-opus:#9a6bff;
+    --m-gpt:#19c37d;   --m-gpt6:#58d6a0;   --m-gptopen:#2bb3a3;   --m-luna:#35d0a0;
+    --m-deepseek:#4493f8; --m-flash:#6cb8ff;
     --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Menlo","Consolas",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     --glow-green:0 0 0 1px rgba(63,185,80,.5),0 0 18px -4px rgba(63,185,80,.55);
@@ -172,9 +176,16 @@
   .mbadge{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10.5px;
     font-weight:600; padding:2px 8px; border-radius:999px; border:1px solid var(--border2); color:var(--muted)}
   .mbadge .b{width:7px;height:7px;border-radius:50%; background:var(--gray)}
-  .mbadge.Haiku{color:#ffb270; border-color:rgba(255,178,112,.4)}   .mbadge.Haiku .b{background:#ffb270}
-  .mbadge.Sonnet{color:var(--purple); border-color:rgba(188,140,255,.4)} .mbadge.Sonnet .b{background:var(--purple)}
-  .mbadge.DeepSeek{color:var(--blue); border-color:rgba(68,147,248,.4)}   .mbadge.DeepSeek .b{background:var(--blue)}
+  .mbadge.m-haiku{color:var(--m-haiku); border-color:rgba(210,180,255,.4)}    .mbadge.m-haiku .b{background:var(--m-haiku)}
+  .mbadge.m-sonnet{color:var(--m-sonnet); border-color:rgba(188,140,255,.4)}  .mbadge.m-sonnet .b{background:var(--m-sonnet)}
+  .mbadge.m-opus{color:var(--m-opus); border-color:rgba(154,107,255,.4)}      .mbadge.m-opus .b{background:var(--m-opus)}
+  .mbadge.m-gpt{color:var(--m-gpt); border-color:rgba(25,195,125,.4)}         .mbadge.m-gpt .b{background:var(--m-gpt)}
+  .mbadge.m-gpt6{color:var(--m-gpt6); border-color:rgba(88,214,160,.4)}       .mbadge.m-gpt6 .b{background:var(--m-gpt6)}
+  .mbadge.m-gptopen{color:var(--m-gptopen); border-color:rgba(43,179,163,.4)} .mbadge.m-gptopen .b{background:var(--m-gptopen)}
+  .mbadge.m-luna{color:var(--m-luna); border-color:rgba(53,208,160,.4)} .mbadge.m-luna .b{background:var(--m-luna)}
+  .mrow.m-luna .b{background:var(--m-luna)}  .mrow.m-luna .mbar>span{background:linear-gradient(90deg,var(--m-luna),#9ae8cf)}
+  .mbadge.m-deepseek{color:var(--m-deepseek); border-color:rgba(68,147,248,.4)} .mbadge.m-deepseek .b{background:var(--m-deepseek)}
+  .mbadge.m-flash{color:var(--m-flash); border-color:rgba(108,184,255,.4)}    .mbadge.m-flash .b{background:var(--m-flash)}
   .metric{display:inline-flex; align-items:center; gap:4px; font-family:var(--mono); font-size:11px; color:var(--muted)}
   .metric svg{width:12px;height:12px; opacity:.8}
   .metric.cost{color:#7bdca0}
@@ -187,18 +198,26 @@
   .mrow{display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid var(--border)}
   .mrow:last-child{border-bottom:none}
   .mrow .mk{display:flex; align-items:center; gap:8px; min-width:92px}
-  .mrow .mk .b{width:9px;height:9px;border-radius:50%}
+  .mrow .mk .b{width:9px;height:9px;border-radius:50%; background:var(--gray)}
   .mrow .mk b{font-size:13px; font-weight:620}
-  .mrow.Haiku .b{background:#ffb270} .mrow.Sonnet .b{background:var(--purple)} .mrow.DeepSeek .b{background:var(--blue)}
+  .mrow.m-haiku .b{background:var(--m-haiku)}     .mrow.m-sonnet .b{background:var(--m-sonnet)}
+  .mrow.m-opus .b{background:var(--m-opus)}       .mrow.m-gpt .b{background:var(--m-gpt)}
+  .mrow.m-gpt6 .b{background:var(--m-gpt6)}       .mrow.m-gptopen .b{background:var(--m-gptopen)}
+  .mrow.m-deepseek .b{background:var(--m-deepseek)} .mrow.m-flash .b{background:var(--m-flash)}
   .mrow .mstats{flex:1; display:flex; flex-direction:column; gap:5px}
   .mrow .nums{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--muted)}
   .mrow .nums b{color:var(--text); font-weight:620}
   .mrow .nums .sv{color:var(--green)}
   .mbar{height:6px; border-radius:999px; background:#0a0f18; border:1px solid var(--border); overflow:hidden}
-  .mbar>span{display:block;height:100%;border-radius:999px}
-  .mrow.Haiku .mbar>span{background:linear-gradient(90deg,#ffb270,#ffd3a8)}
-  .mrow.Sonnet .mbar>span{background:linear-gradient(90deg,var(--purple),#d9c2ff)}
-  .mrow.DeepSeek .mbar>span{background:linear-gradient(90deg,var(--blue),#9cc5ff)}
+  .mbar>span{display:block;height:100%;border-radius:999px; background:linear-gradient(90deg,var(--gray),#8a97ad)}
+  .mrow.m-haiku .mbar>span{background:linear-gradient(90deg,var(--m-haiku),#efe0ff)}
+  .mrow.m-sonnet .mbar>span{background:linear-gradient(90deg,var(--m-sonnet),#d9c2ff)}
+  .mrow.m-opus .mbar>span{background:linear-gradient(90deg,var(--m-opus),#c9b0ff)}
+  .mrow.m-gpt .mbar>span{background:linear-gradient(90deg,var(--m-gpt),#7ff0c6)}
+  .mrow.m-gpt6 .mbar>span{background:linear-gradient(90deg,var(--m-gpt6),#b6f2d8)}
+  .mrow.m-gptopen .mbar>span{background:linear-gradient(90deg,var(--m-gptopen),#86ded4)}
+  .mrow.m-deepseek .mbar>span{background:linear-gradient(90deg,var(--m-deepseek),#9cc5ff)}
+  .mrow.m-flash .mbar>span{background:linear-gradient(90deg,var(--m-flash),#bcdcff)}
 
   .lrow{display:flex; align-items:center; gap:10px; padding:8px 9px; border-radius:10px; margin:0 -4px}
   .lrow + .lrow{margin-top:1px}
@@ -325,6 +344,13 @@ const P = {
 function svg(name, w){ w=w||'1em'; return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+w+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(P[name]||'')+'</svg>'; }
 const SICO = {solved:'check', running:'loader', missed:'x', error:'shield', untried:'target'};
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// model label -> css slug (labels have dots/spaces/parens, so can't be class names directly)
+const MODEL_CLASS = {
+  'Haiku':'m-haiku', 'Sonnet':'m-sonnet', 'Opus':'m-opus',
+  'GPT-5.3-codex':'m-gpt', 'GPT-6-sol':'m-gpt6', 'GPT-6-luna':'m-luna', 'GPT (open-net)':'m-gptopen',
+  'DeepSeek-Pro':'m-deepseek', 'DeepSeek-Flash':'m-flash'
+};
+const modelClass = m => MODEL_CLASS[m] || 'm-unknown';
 
 // paint static icons
 document.getElementById('brandIcon').innerHTML = svg('flag');
@@ -406,7 +432,11 @@ function render(d){
   const pct=Math.min(100,100*used/lim);
   const sb=document.getElementById('tSpendBar'); sb.style.width=pct+'%';
   const wrap=document.getElementById('spendBarWrap'); wrap.className='bar'+(pct>90?' over':pct>66?' warn':'');
-  document.getElementById('spendSrc').textContent = (spend.source==='real'?'· live':'· est') + ' /$'+lim;
+  const real = spend.source==='real';
+  const srcEl=document.getElementById('spendSrc');
+  srcEl.textContent = (real?'· live':'· est') + ' /$'+lim;
+  srcEl.style.color = real ? 'var(--green)' : 'var(--dim)';
+  srcEl.title = real ? 'real spend from the LiteLLM gateway key' : 'estimated from token usage in run results';
 
   // challenges grouped
   renderChallenges(d.challenges||[]);
@@ -445,7 +475,7 @@ function card(c){
   const diff=(c.difficulty||'').toLowerCase();
   const model=c.model;
   let foot='';
-  if(model) foot += '<span class="mbadge '+esc(model)+'"><span class="b"></span>'+esc(model)+'</span>';
+  if(model) foot += '<span class="mbadge '+modelClass(model)+'"><span class="b"></span>'+esc(model)+'</span>';
   else if(st==='running') foot += '<span class="mbadge"><span class="b"></span>live</span>';
   if(c.cost_usd!=null) foot += '<span class="metric cost">'+svg('dollar','12px')+(fmtCost(c.cost_usd).replace('$',''))+'</span>';
   if(c.elapsed_s!=null) foot += '<span class="metric">'+svg('clock','12px')+fmtDur(c.elapsed_s)+'</span>';
@@ -469,7 +499,7 @@ function renderModels(ms){
   host.innerHTML = ms.map(m=>{
     const rate=Math.round((m.solve_rate||0)*100);
     const w=Math.round(100*(m.attempts||0)/maxA);
-    const cls=['Haiku','Sonnet','DeepSeek'].includes(m.model)?m.model:'';
+    const cls=modelClass(m.model);
     return '<div class="mrow '+cls+'">'+
       '<div class="mk"><span class="b"></span><b>'+esc(m.model)+'</b></div>'+
       '<div class="mstats">'+

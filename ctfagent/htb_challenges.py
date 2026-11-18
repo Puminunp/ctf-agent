@@ -213,11 +213,17 @@ class HtbController(Controller):
                             points=points, files=files, challenge_dir=challenge_dir,
                             is_remote=True, remote_host=host, remote_ports=ports)
 
-        target_host = self.cfg.environment.target_host if host else None
+        if self.cfg.environment.remote_network == "open":
+            target_host = host                       # open egress: no forwarder, reach the real remote host
+        else:
+            target_host = self.cfg.environment.target_host if host else None
+        allowed_hosts = {target_host} if target_host else set()
+        if self.cfg.environment.remote_network == "open":
+            allowed_hosts = allowed_hosts | {"*"}    # open egress: don't tripwire external hosts (callbacks)
         task = Task(challenge_id=challenge_id, name=name, category=category,
                     description=str(info.get("description") or ""), files=files,
                     target_host=target_host, target_port=(ports[0] if ports else None),
-                    allowed_hosts={target_host} if target_host else set())
+                    allowed_hosts=allowed_hosts)
 
         reset_id = self.env.reset(challenge_id, chal)
         paths = host_file_paths(chal) if files else []

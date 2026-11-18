@@ -96,15 +96,48 @@ def category_name(cat_id):
         return "other"
 
 
+# Canonical display order for the Model Performance panel, grouped by family so the
+# Claude / OpenAI / DeepSeek rows cluster together instead of sorting alphabetically.
+MODEL_ORDER = (
+    "Haiku", "Sonnet", "Opus",                        # Anthropic / Claude
+    "GPT-5.3-codex", "GPT-6-sol", "GPT-6-luna", "GPT (open-net)",   # OpenAI / GPT
+    "DeepSeek-Pro", "DeepSeek-Flash",                 # DeepSeek
+)
+
+
+def _model_sort_key(m):
+    """Sort known labels by MODEL_ORDER (family grouping); unknown labels fall to the end."""
+    try:
+        return (0, MODEL_ORDER.index(m), "")
+    except ValueError:
+        return (1, 0, str(m))
+
+
 def model_for(config_id, run_id=""):
-    """Derive a friendly model name from the config/run id (model is not a result field)."""
+    """Derive a friendly model name from the config/run id (model is not a result field).
+
+    config_ids look like ``agent-htb-<base>-<label>``. Order matters: specific substrings are
+    tested before generic ones so ``flash`` beats ``deepseek`` and ``gpt6`` / ``open`` beat ``gpt``.
+    """
     s = f"{config_id or ''} {run_id or ''}".lower()
     if "haiku" in s:
         return "Haiku"
     if "sonnet" in s:
         return "Sonnet"
-    if "deepseek" in s:
-        return "DeepSeek"
+    if "opus" in s:
+        return "Opus"
+    if "flash" in s:
+        return "DeepSeek-Flash"
+    if "deepseek" in s:            # deepseek without flash
+        return "DeepSeek-Pro"
+    if "gpt6" in s:
+        return "GPT-6-sol"
+    if "open" in s:               # open-net config solved via internet egress
+        return "GPT (open-net)"
+    if "luna" in s:                # gpt-6-luna config (agent-htb-luna)
+        return "GPT-6-luna"
+    if "gpt" in s:                 # gpt without gpt6/open/luna
+        return "GPT-5.3-codex"
     return str(config_id) if config_id else "unknown"
 
 
@@ -378,13 +411,10 @@ def build_state():
                 if a.get("verified"):
                     model_solved[m].add(cid)
         models = []
+        # List every model that actually has data (>=1 attempt / result row), in family order.
         seen_models = set(model_rows) | set(model_attempted)
-        for m in ("Haiku", "Sonnet", "DeepSeek"):
-            if m not in seen_models:
-                seen_models.add(m)
-        for m in sorted(seen_models, key=lambda x: ("", x) if x in ("Haiku", "Sonnet", "DeepSeek") else ("z", x)):
-            if m is None:
-                continue
+        seen_models.discard(None)
+        for m in sorted(seen_models, key=_model_sort_key):
             attempts_n = len(model_attempted.get(m, set()))
             solves_n = len(model_solved.get(m, set()))
             spend_m = sum((r.get("cost_usd") or 0.0) for r in model_rows.get(m, []))

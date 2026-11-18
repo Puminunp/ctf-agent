@@ -22,6 +22,8 @@ def _norm(host: str) -> str:
 
 def find_violations(command: str, allowed_hosts: set[str] | frozenset[str]) -> list[str]:
     allowed = {_norm(h) for h in allowed_hosts} | LOOPBACK
+    if "*" in allowed:                     # wildcard: egress intentionally open (remote_network "open")
+        return []
     found: list[str] = []
 
     def check(host: str) -> None:

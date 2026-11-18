@@ -39,8 +39,8 @@ class Prepared:
     allowed_hosts: set
 
 
-NOTES_HEADER = ("\n\nNotes left by an earlier attempt at this challenge. They may be wrong or incomplete, so "
-                "check anything you rely on:\n")
+NOTES_HEADER = ("\n\nNotes left by earlier attempts at this challenge (most recent first). They may be wrong or "
+                "incomplete, so check anything you rely on:\n")
 
 
 class Controller:
@@ -78,18 +78,28 @@ class Controller:
     def cleanup(self, challenge_id: str, detail: dict) -> None:
         self.env.stop()
 
-    def prior_notes(self, challenge_id: str) -> str | None:
-        """The newest notes an earlier attempt left for this challenge, from any configuration."""
-        best = None
+    def prior_notes(self, challenge_id: str, limit: int = 3) -> str | None:
+        """The most recent notes earlier attempts left for this challenge (newest first), from any
+        configuration, so a new attempt sees the accumulated history rather than only the last one.
+        Notes that mention a content filter are skipped on purpose: telling the agent its output was
+        filtered has no upside and risks it self-censoring."""
+        cands = []
         for path in (self.out / "details").glob("*.json"):
             try:
                 d = json.loads(path.read_text(encoding="utf-8"))
             except ValueError:
                 continue
-            if d.get("challenge_id") == challenge_id and d.get("notes"):
-                if best is None or d.get("started_unix", 0) > best.get("started_unix", 0):
-                    best = d
-        return best["notes"] if best else None
+            notes = d.get("notes")
+            if d.get("challenge_id") != challenge_id or not notes:
+                continue
+            if any(w in notes.lower() for w in ("content_filter", "content policy", "flagged for")):
+                continue
+            cands.append((d.get("started_unix", 0), d.get("model", "?"), notes))
+        if not cands:
+            return None
+        cands.sort(key=lambda c: c[0], reverse=True)   # newest first
+        return "\n\n".join(f"-- earlier attempt ({model}):\n{notes}"
+                           for _, model, notes in cands[:limit])
 
     def run_one(self, challenge_id: str, trial: int) -> dict:
         run_id = f"{self.cfg.config_id}-{challenge_id}-t{trial}"
