@@ -69,6 +69,36 @@ class AttemptLoop(unittest.TestCase):
         self.assertEqual((res.status, res.stop_reason), ("timeout", "wall_clock_limit"))
         self.assertEqual(res.llm_calls, 2)
 
+    def test_mailbox_injects_new_content_mid_run(self):
+        import tempfile
+        from pathlib import Path
+        mbox = Path(tempfile.mkdtemp()) / "box.txt"
+        note = "teammate finding: fd starts at slot7 + 0x20"
+        # The executor drops a coordinator note into the mailbox the first time a tool runs; the agent must
+        # pick it up on its NEXT turn (content-based detection, no container restart, no mtime dependency).
+        ex = FakeExecutor(delay_s=1, sleep=lambda s: mbox.write_text(note, encoding="utf-8"))
+        trace = Trace(None)
+        res = run_attempt(cfg=make_cfg(), llm=ScriptedLLM([reply(call("run_shell", command="echo hi")),
+                          reply(call("run_shell", command="echo hi")), reply(call("run_shell", command="echo hi"))]),
+                          executor=ex, verifier=HashVerifier(FLAG), trace=trace, system_prompt="s",
+                          task_prompt="t", allowed_hosts={"target"}, mailbox_path=str(mbox), clock=FakeClock())
+        updates = [e for e in trace.events if e["type"] == "mailbox_update"]
+        self.assertEqual(len(updates), 1)                 # injected exactly once
+        self.assertEqual(updates[0]["chars"], len(note))
+        self.assertTrue(any(e["type"] == "mailbox_watch" for e in trace.events))
+
+    def test_mailbox_preexisting_content_not_reinjected(self):
+        import tempfile
+        from pathlib import Path
+        mbox = Path(tempfile.mkdtemp()) / "box.txt"
+        mbox.write_text("stale guidance from a previous run", encoding="utf-8")  # present at run start
+        trace = Trace(None)
+        run_attempt(cfg=make_cfg(), llm=ScriptedLLM([reply(call("run_shell", command="echo hi")),
+                    reply(call("run_shell", command="echo hi"))]), executor=FakeExecutor(),
+                    verifier=HashVerifier(FLAG), trace=trace, system_prompt="s", task_prompt="t",
+                    allowed_hosts={"target"}, mailbox_path=str(mbox), clock=FakeClock())
+        self.assertFalse([e for e in trace.events if e["type"] == "mailbox_update"])  # nothing new → no inject
+
     def test_tool_timeout_is_capped_by_controller_and_remaining_time(self):
         ex = FakeExecutor()
         run([reply(call("run_shell", command="sleep 999", timeout_s=9999))], ex,

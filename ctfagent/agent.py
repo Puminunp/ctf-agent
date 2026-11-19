@@ -96,9 +96,18 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
         return cfg.pricing.cost(in_tok, out_tok)
 
     # A coordinator can drop live guidance into this host file mid-run; the agent picks it up on its next
-    # turn WITHOUT restarting the container (state and installed tools are preserved). Only writes AFTER the
-    # run started are injected.
-    mbox_mtime = os.path.getmtime(mailbox_path) if (mailbox_path and os.path.exists(mailbox_path)) else 0.0
+    # turn WITHOUT restarting the container (state and installed tools are preserved). Detection is
+    # content-based (inject whenever the file text differs from what was last injected) rather than mtime-
+    # based: mtime comparison proved unreliable in the live swarm, so the baseline is the box's content at
+    # run start — anything there already is treated as seen, only genuinely new text is injected.
+    mbox_seen = ""
+    if mailbox_path and os.path.exists(mailbox_path):
+        try:
+            mbox_seen = open(mailbox_path, encoding="utf-8").read().strip()
+        except OSError:
+            mbox_seen = ""
+    if mailbox_path:
+        trace.event("mailbox_watch", path=str(mailbox_path), baseline_chars=len(mbox_seen))
 
     while True:
         if elapsed() >= lim.wall_clock_s:
@@ -116,19 +125,14 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
 
         if mailbox_path:                      # live coordinator guidance, injected without a container restart
             try:
-                mt = os.path.getmtime(mailbox_path)
+                note = open(mailbox_path, encoding="utf-8").read().strip()
             except OSError:
-                mt = mbox_mtime
-            if mt > mbox_mtime:
-                mbox_mtime = mt
-                try:
-                    note = open(mailbox_path, encoding="utf-8").read().strip()
-                except OSError:
-                    note = ""
-                if note:
-                    messages.append({"role": "user", "content":
-                                     "[Coordinator update — new guidance / teammate findings]\n" + note})
-                    trace.event("mailbox_update", chars=len(note))
+                note = mbox_seen
+            if note and note != mbox_seen:    # genuinely new text since last injection (no mtime/clock dependency)
+                mbox_seen = note
+                messages.append({"role": "user", "content":
+                                 "[Coordinator update — new guidance / teammate findings]\n" + note})
+                trace.event("mailbox_update", chars=len(note))
 
         try:
             resp = llm.complete(messages, TOOL_SPECS)
