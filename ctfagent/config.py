@@ -98,6 +98,9 @@ class Config:
     escalation: Escalation = field(default_factory=Escalation)
     flag_format: str = ""            # regular expression a candidate must match before it is sent for checking
     handoff_notes: bool = False      # ask for a short summary when an attempt runs out, for the next attempt
+    provider: str = "gateway"        # "gateway" = OpenAI-compatible Duke gateway; "anthropic" = direct Claude API
+    effort: str = "high"             # reasoning effort for the anthropic provider (low|medium|high|xhigh|max)
+    keep_target: bool = False        # swarm mode: do NOT stop the shared HTB target container on cleanup
 
     def to_dict(self) -> dict:
         return asdict(self)

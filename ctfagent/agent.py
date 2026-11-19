@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shlex
 import time
@@ -69,7 +70,7 @@ class AttemptResult:
 
 def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, trace: Trace,
                 system_prompt: str, task_prompt: str, allowed_hosts: set[str],
-                clock=time.monotonic) -> AttemptResult:
+                mailbox_path: str | None = None, clock=time.monotonic) -> AttemptResult:
     lim = cfg.limits
     start = clock()
     messages: list[dict] = [{"role": "system", "content": system_prompt},
@@ -94,6 +95,11 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
     def cost() -> float:
         return cfg.pricing.cost(in_tok, out_tok)
 
+    # A coordinator can drop live guidance into this host file mid-run; the agent picks it up on its next
+    # turn WITHOUT restarting the container (state and installed tools are preserved). Only writes AFTER the
+    # run started are injected.
+    mbox_mtime = os.path.getmtime(mailbox_path) if (mailbox_path and os.path.exists(mailbox_path)) else 0.0
+
     while True:
         if elapsed() >= lim.wall_clock_s:
             status, stop_reason = "timeout", "wall_clock_limit"
@@ -107,6 +113,22 @@ def run_attempt(*, cfg: Config, llm, executor: Executor, verifier: Verifier, tra
         if lim.max_cost_usd > 0 and cost() >= lim.max_cost_usd:
             status, stop_reason = "budget_exhausted", "cost_limit"
             break
+
+        if mailbox_path:                      # live coordinator guidance, injected without a container restart
+            try:
+                mt = os.path.getmtime(mailbox_path)
+            except OSError:
+                mt = mbox_mtime
+            if mt > mbox_mtime:
+                mbox_mtime = mt
+                try:
+                    note = open(mailbox_path, encoding="utf-8").read().strip()
+                except OSError:
+                    note = ""
+                if note:
+                    messages.append({"role": "user", "content":
+                                     "[Coordinator update — new guidance / teammate findings]\n" + note})
+                    trace.event("mailbox_update", chars=len(note))
 
         try:
             resp = llm.complete(messages, TOOL_SPECS)

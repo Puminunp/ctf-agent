@@ -119,9 +119,12 @@ class Controller:
             if notes:
                 prompt += NOTES_HEADER + notes
                 detail["used_prior_notes"] = True
+            mbox = self.out / "mailbox" / f"{self.cfg.config_id}.txt"
+            mbox.parent.mkdir(parents=True, exist_ok=True)
             res = run_attempt(
                 cfg=self.cfg, llm=self.llm, executor=self.env.executor(), verifier=ready.verifier, trace=trace,
-                system_prompt=self.system_prompt, task_prompt=prompt, allowed_hosts=ready.allowed_hosts)
+                system_prompt=self.system_prompt, task_prompt=prompt, allowed_hosts=ready.allowed_hosts,
+                mailbox_path=str(mbox))
             status, verified, elapsed = res.status, res.verified, res.elapsed_s
             tokens, cost = (res.input_tokens, res.output_tokens), res.cost_usd
             detail.update(stop_reason=res.stop_reason, steps=res.steps, llm_calls=res.llm_calls,

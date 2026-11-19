@@ -1,5 +1,5 @@
 {
-  "config_id": "agent-htb-open-luna",
+  "config_id": "agent-htb-luna-v7",
   "model": "gpt-6-luna",
   "temperature": 0.1,
   "system_prompt_file": "prompts/system-htb.md",
@@ -8,26 +8,26 @@
   "handoff_notes": true,
   "escalation": {
     "ladder": [
-      {"model": "gpt-6-luna", "input_usd_per_mtok": 1.25, "output_usd_per_mtok": 10.00, "max_cost_usd": 3.00}
+      {"model": "gpt-6-luna", "input_usd_per_mtok": 1.25, "output_usd_per_mtok": 10.00, "max_cost_usd": 0}
     ],
     "start_rung_by_difficulty": {},
     "escalate_on": [],
     "reserve_usd": 0.0
   },
   "limits": {
-    "wall_clock_s": 1800,
-    "max_steps": 160,
+    "wall_clock_s": 3600,
+    "max_steps": 600,
     "max_total_tokens": 20000000,
     "max_wrong_flags": 10,
     "max_idle_turns": 5,
-    "tool_timeout_s": 90,
+    "tool_timeout_s": 120,
     "max_output_chars": 8000,
-    "llm_timeout_s": 120,
+    "llm_timeout_s": 300,
     "llm_retries": 6,
     "llm_backoff_cap_s": 60,
     "llm_honor_retry_after": true,
-    "llm_retry_budget_s": 150,
-    "max_cost_usd": 3.0,
+    "llm_retry_budget_s": 300,
+    "max_cost_usd": 0,
     "keep_tool_outputs": 6,
     "old_output_chars": 600
   },

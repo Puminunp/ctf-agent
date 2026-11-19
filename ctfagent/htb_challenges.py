@@ -238,7 +238,9 @@ class HtbController(Controller):
         return Prepared(reset_id, verifier, task_prompt(task, self.cfg.environment.workdir), task.allowed_hosts)
 
     def cleanup(self, challenge_id: str, detail: dict) -> None:
-        if self._live is not None:
+        # In swarm mode several agents share ONE HTB target instance; a run that stops it would kill the
+        # others mid-round, so keep_target leaves the shared target up (stopped manually when the swarm ends).
+        if self._live is not None and not getattr(self.cfg, "keep_target", False):
             self.catalog.stop(self._live)
             self._live = None
         self.env.stop()

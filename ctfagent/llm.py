@@ -78,7 +78,12 @@ class GatewayClient:
                     payload = json.loads(resp.read().decode("utf-8"))
                 return parse_response(payload, time.monotonic() - t0)
             except urllib.error.HTTPError as e:
-                problem = f"HTTP {e.code}"
+                detail = ""
+                try:                       # the gateway's body says WHY (e.g. malformed messages); keep it
+                    detail = e.read().decode("utf-8", "replace").strip()[:500]
+                except Exception:
+                    pass
+                problem = f"HTTP {e.code}" + (f": {detail}" if detail else "")
                 retry_after = e.headers.get("Retry-After") if e.headers else None
                 if e.code not in self.RETRY_STATUS:
                     break

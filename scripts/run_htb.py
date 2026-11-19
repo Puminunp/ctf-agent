@@ -104,43 +104,65 @@ def main() -> None:
     cfg = load_config(args.config)
     if not cfg.model:
         sys.exit("config 'model' is empty.")
-    gw_token = os.environ.get("LITELLM_TOKEN")
-    if not gw_token:
-        sys.exit("LITELLM_TOKEN is not set in .env (the Duke gateway key).")
-    base_url = os.environ.get("LITELLM_BASE_URL", "https://litellm.oit.duke.edu/v1")
+    provider = getattr(cfg, "provider", "gateway")
     system_prompt = (ROOT / cfg.system_prompt_file).read_text(encoding="utf-8")
     lim = cfg.limits
+    base_url = gw_token = None
+    llm_cache: dict = {}
 
-    # One gateway client per model, built on demand and reused. All rungs share the one gateway key.
-    llm_cache: dict[str, GatewayClient] = {}
+    # One client per model, built on demand and reused. The provider is chosen by the config.
+    if provider == "anthropic":
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            sys.exit("ANTHROPIC_API_KEY is not set in .env "
+                     "(paste it with: python scripts/set_env_secret.py ANTHROPIC_API_KEY --prompt).")
+        from ctfagent.anthropic_client import AnthropicClient  # noqa: E402
+        llm_secret = api_key
 
-    def llm_for(model: str) -> GatewayClient:
-        if model not in llm_cache:
-            llm_cache[model] = GatewayClient(
-                base_url, gw_token, model, cfg.temperature, lim.llm_timeout_s, lim.llm_retries,
-                backoff_cap_s=lim.llm_backoff_cap_s, honor_retry_after=lim.llm_honor_retry_after,
-                retry_budget_s=lim.llm_retry_budget_s)
-        return llm_cache[model]
+        def llm_for(model: str):
+            if model not in llm_cache:
+                llm_cache[model] = AnthropicClient(
+                    api_key, model, timeout_s=lim.llm_timeout_s, retries=lim.llm_retries,
+                    effort=getattr(cfg, "effort", "high"))
+            return llm_cache[model]
+    else:
+        gw_token = os.environ.get("LITELLM_TOKEN")
+        if not gw_token:
+            sys.exit("LITELLM_TOKEN is not set in .env (the Duke gateway key).")
+        base_url = os.environ.get("LITELLM_BASE_URL", "https://litellm.oit.duke.edu/v1")
+        llm_secret = gw_token
+
+        def llm_for(model: str):
+            if model not in llm_cache:
+                llm_cache[model] = GatewayClient(
+                    base_url, gw_token, model, cfg.temperature, lim.llm_timeout_s, lim.llm_retries,
+                    backoff_cap_s=lim.llm_backoff_cap_s, honor_retry_after=lim.llm_honor_retry_after,
+                    retry_budget_s=lim.llm_retry_budget_s)
+            return llm_cache[model]
 
     first_model = cfg.escalation.ladder[0].model if cfg.escalation.ladder else cfg.model
     env = ComposeEnvironment(cfg.environment, work_dir=out / "compose")
     ctl = HtbController(cfg, system_prompt, llm_for(first_model), env, out, loader=None, repo_dir=ROOT,
-                        sample_type="live", secrets=[token, gw_token], catalog=catalog, mcp=mcp)
+                        sample_type="live", secrets=[token, llm_secret], catalog=catalog, mcp=mcp)
 
     # The gateway tracks REAL spend per key (across every machine using it) and enforces max_budget
     # server-side. Prefer those real numbers for the budget stop; fall back to the token-based estimate.
     gw_readable, gw_max = False, None
-    try:
-        info = key_info(base_url, gw_token)
-        gw_readable, gw_max = True, info.get("max_budget")
-        real = float(info.get("spend") or 0.0)
-        if gw_max is not None:
-            print(f"gateway key: real spend ${real:.6f} of ${float(gw_max):.2f} "
-                  f"(remaining ${budget_remaining(info):.4f}, resets every {info.get('budget_duration') or '?'})")
-        else:
-            print(f"gateway key: real spend ${real:.6f} (no max_budget set on the key)")
-    except Exception as e:  # /key/info may be restricted on some keys
-        print(f"gateway /key/info not readable ({type(e).__name__}); using the token-based cost estimate.")
+    if provider == "anthropic":
+        print(f"provider: Anthropic Claude API (direct, {cfg.model}). No server-side key meter here, so "
+              f"spend is the local token-based estimate; laptop budget cap ${args.laptop_budget:.2f}.")
+    else:
+        try:
+            info = key_info(base_url, gw_token)
+            gw_readable, gw_max = True, info.get("max_budget")
+            real = float(info.get("spend") or 0.0)
+            if gw_max is not None:
+                print(f"gateway key: real spend ${real:.6f} of ${float(gw_max):.2f} "
+                      f"(remaining ${budget_remaining(info):.4f}, resets every {info.get('budget_duration') or '?'})")
+            else:
+                print(f"gateway key: real spend ${real:.6f} (no max_budget set on the key)")
+        except Exception as e:  # /key/info may be restricted on some keys
+            print(f"gateway /key/info not readable ({type(e).__name__}); using the token-based cost estimate.")
 
     effective_budget = args.laptop_budget
     if gw_max is not None:

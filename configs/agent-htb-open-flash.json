@@ -1,5 +1,5 @@
 {
-  "config_id": "agent-htb-open-flash",
+  "config_id": "agent-htb-flash-v4",
   "model": "deepseek-v4-flash",
   "temperature": 0.1,
   "system_prompt_file": "prompts/system-htb.md",
@@ -8,7 +8,7 @@
   "handoff_notes": true,
   "escalation": {
     "ladder": [
-      {"model": "deepseek-v4-flash", "input_usd_per_mtok": 0.15, "output_usd_per_mtok": 0.60, "max_cost_usd": 2.00}
+      {"model": "deepseek-v4-flash", "input_usd_per_mtok": 0.15, "output_usd_per_mtok": 0.60, "max_cost_usd": 0}
     ],
     "start_rung_by_difficulty": {},
     "escalate_on": [],
@@ -22,12 +22,12 @@
     "max_idle_turns": 5,
     "tool_timeout_s": 90,
     "max_output_chars": 8000,
-    "llm_timeout_s": 120,
+    "llm_timeout_s": 300,
     "llm_retries": 6,
     "llm_backoff_cap_s": 60,
     "llm_honor_retry_after": true,
     "llm_retry_budget_s": 150,
-    "max_cost_usd": 2.0,
+    "max_cost_usd": 0,
     "keep_tool_outputs": 6,
     "old_output_chars": 600
   },

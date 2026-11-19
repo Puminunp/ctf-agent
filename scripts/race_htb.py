@@ -121,8 +121,11 @@ def main() -> None:
     if args.dry_run:
         print("\n--dry-run: nothing launched.")
         return
-    if not os.environ.get("LITELLM_TOKEN"):
-        sys.exit("\nLITELLM_TOKEN is not set in .env — add the Duke gateway key before running for real.")
+    from ctfagent.config import load_config  # noqa: E402
+    provider = getattr(load_config(args.config), "provider", "gateway")
+    need_env = "ANTHROPIC_API_KEY" if provider == "anthropic" else "LITELLM_TOKEN"
+    if not os.environ.get(need_env):
+        sys.exit(f"\n{need_env} is not set in .env — add the key before running for real.")
 
     out.mkdir(parents=True, exist_ok=True)
 
